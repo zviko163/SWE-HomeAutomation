@@ -3,22 +3,24 @@ const router = express.Router();
 const {
     getSensorData,
     getSensorDataById,
-    createSensorData
+    getLatestSensorData,
+    getAggregatedSensorData,
+    createSensorData,
 } = require('../controllers/sensorController');
 
-// @route   GET api/sensors
-// @desc    Get all sensor data
-// @access  Public
+// Get latest sensor data
+router.get('/latest', getLatestSensorData);
+
+// Get aggregated sensor data
+router.get('/aggregate', getAggregatedSensorData);
+
+// Get all sensor data with pagination and filtering
 router.get('/', getSensorData);
 
-// @route   GET api/sensors/:id
-// @desc    Get sensor data by ID
-// @access  Public
+// Get sensor data by ID
 router.get('/:id', getSensorDataById);
 
-// @route   POST api/sensors
-// @desc    Create new sensor data entry
-// @access  Public
+// Create new sensor data
 router.post('/', createSensorData);
 
 module.exports = router;

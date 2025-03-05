@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
-const SensorDataSchema = new mongoose.Schema({
+const sensorDataSchema = new mongoose.Schema({
     id: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        trim: true
     },
     temperature: {
         type: Number,
@@ -21,6 +23,13 @@ const SensorDataSchema = new mongoose.Schema({
         type: Number,
         required: true
     }
+}, {
+    timestamps: true
 });
 
-module.exports = mongoose.model('SensorData', SensorDataSchema);
+// Create index for faster querying
+sensorDataSchema.index({ timeRecorded: 1 });
+
+const SensorData = mongoose.model('SensorData', sensorDataSchema);
+
+module.exports = SensorData;

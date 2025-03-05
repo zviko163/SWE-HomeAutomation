@@ -1,41 +1,42 @@
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const connectDB = require('./config/db');
+const path = require('path');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
-// Import routes
+// Import Routes
 const sensorRoutes = require('./routes/sensorRoutes');
-const deviceRoutes = require('./routes/deviceRoutes');
 
 // Load environment variables
 dotenv.config();
 
-// Connect to database
-connectDB();
-
-// Initialize Express app
+// Create Express app
 const app = express();
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Mount routes
-app.use('/api/sensors', sensorRoutes);
-app.use('/api/devices', deviceRoutes);
-
-// Basic route
+// Basic route for testing
 app.get('/', (req, res) => {
-    res.send('Smart Home Automation API is running');
+    res.send('API is running...');
 });
 
-// Error handling middlewares
+// Mount routes
+app.use('/api/sensors', sensorRoutes);
+
+// Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
-// Set port and start server
+// Define port
 const PORT = process.env.PORT || 5000;
+
+// Start server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

@@ -1,27 +1,29 @@
 const mongoose = require('mongoose');
 
-const DeviceSchema = new mongoose.Schema({
+const deviceSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     type: {
         type: String,
         required: true,
-        enum: ['light', 'thermostat', 'door', 'window', 'sensor']
+        enum: ['light', 'thermostat', 'motion_sensor', 'door', 'window', 'alarm'],
+        trim: true
     },
     room: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     status: {
         type: String,
-        required: true,
-        default: 'offline',
-        enum: ['online', 'offline']
+        enum: ['online', 'offline'],
+        default: 'offline'
     },
     state: {
-        type: Object,
+        type: mongoose.Schema.Types.Mixed,
         default: {}
     },
     lastUpdated: {
@@ -32,4 +34,10 @@ const DeviceSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('Device', DeviceSchema);
+// Create index for faster querying
+deviceSchema.index({ room: 1 });
+deviceSchema.index({ type: 1 });
+
+const Device = mongoose.model('Device', deviceSchema);
+
+module.exports = Device;

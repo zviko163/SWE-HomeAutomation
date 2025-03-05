@@ -1,14 +1,31 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 const path = require('path');
 const connectDB = require('../config/db');
-const { importSensorDataFromCSV } = require('../utils/csvImporter');
+const { importSensorData } = require('../utils/csvImporter');
 
-// Connect to MongoDB
-connectDB();
+/**
+ * Script to import sensor data from CSV files
+ */
+const importAllData = async () => {
+    try {
+        // Connect to MongoDB
+        await connectDB();
 
-// Path to your CSV file - update this to your actual CSV file path
-const csvFilePath = path.resolve(__dirname, '../data/sensor_data.csv');
+        // Path to CSV file (relative to this script)
+        const csvFilePath = path.join(__dirname, '../data/sensor_data.csv');
 
-// Import the data
-console.log('Starting data import...');
-importSensorDataFromCSV(csvFilePath);
+        console.log('Starting data import process...');
+
+        // Import sensor data
+        const importedCount = await importSensorData(csvFilePath);
+
+        console.log(`Import complete! Imported ${importedCount} sensor readings.`);
+        process.exit(0);
+    } catch (error) {
+        console.error('Import failed:', error);
+        process.exit(1);
+    }
+};
+
+// Run the import
+importAllData();

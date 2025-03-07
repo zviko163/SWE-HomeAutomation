@@ -12,6 +12,7 @@
 #define BUZZERPIN 32
 #define TRIGPIN 12
 #define ECHOPIN 14
+
 #define WATERPIN 33 // Water sensor pin for rain detection
 
 DHT dht(DHTPIN, DHTTYPE);

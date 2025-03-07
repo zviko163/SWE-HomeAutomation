@@ -15,6 +15,7 @@
 #define WATERPIN 33 // Water sensor pin for rain detection
 #define LED_LIGHT 25 // LED for lights
 #define RELAY_DOOR 26  // Relay for door motor
+#define LEDPIN 2                           // Heartbeat LED pin
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -39,6 +40,7 @@ void handleLightOn();
 void handleLightOff();
 void handleDoorOpen();
 void handleDoorClose();
+void printSensorReadings();
 
 void setup() {
   Serial.begin(115200);
@@ -116,12 +118,12 @@ void handleRoot() {
 
 // Route handlers
 void handleLightOn() {
-  digitalWrite(RELAY_LIGHT, HIGH);
+  digitalWrite(LED_LIGHT, HIGH);
   server.send(200, "text/html", "<p>Light turned ON. <a href='/'>Go Back</a></p>");
 }
 
 void handleLightOff() {
-  digitalWrite(RELAY_LIGHT, LOW);
+  digitalWrite(LED_LIGHT, LOW);
   server.send(200, "text/html", "<p>Light turned OFF. <a href='/'>Go Back</a></p>");
 }
 
@@ -141,6 +143,7 @@ void loop() {
   server.handleClient();
 
   blinkHeartbeat();
+  printSensorReadings();
   
   // Read sensors
   float temperature = dht.readTemperature();
@@ -153,7 +156,7 @@ void loop() {
   // Send data to server/database using HTTP
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin("http://yourserver.com/api/sensordata");
+    http.begin("http://192.168.129.29/swe_project/SWE-HomeAutomation/SensorDataDB/post_sensors_data.php");
     http.addHeader("Content-Type", "application/json");
     String payload = String("{\"temperature\":") + temperature +
                      String(", \"humidity\":") + humidity +
@@ -191,7 +194,6 @@ void loop() {
     digitalWrite(BUZZERPIN, LOW);
   }
 
-  
   delay(5000); // 5 seconds
 }
 
@@ -205,11 +207,30 @@ void blinkHeartbeat() {
   if (currentMillis - previousMillis >= waitInterval) {
     previousMillis = currentMillis; // Reset the cycle start time
     digitalWrite(LEDPIN, HIGH);
-    delay(heartbeatRate);
+    delay(1000);
     digitalWrite(LEDPIN, LOW);
-    delay(heartbeatRate);
+    delay(1000);
     digitalWrite(LEDPIN, HIGH);
-    delay(heartbeatRate);
+    delay(1000);
     digitalWrite(LEDPIN, LOW);
   } 
+}
+
+// Function to print the sensor reading states
+void printSensorReadings() {
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  int lightLevel = analogRead(LDRPIN);
+  bool motionDetected = digitalRead(PIRPIN);
+  float distance = measureDistance();
+  bool isRaining = digitalRead(WATERPIN);
+
+  Serial.println("=== Sensor Readings ===");
+  Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
+  Serial.print("Humidity: "); Serial.print(humidity); Serial.println(" %");
+  Serial.print("Light Level: "); Serial.println(lightLevel);
+  Serial.print("Motion Detected: "); Serial.println(motionDetected ? "Yes" : "No");
+  Serial.print("Distance: "); Serial.print(distance); Serial.println(" cm");
+  Serial.print("Raining: "); Serial.println(isRaining ? "Yes" : "No");
+  Serial.println("=======================");
 }

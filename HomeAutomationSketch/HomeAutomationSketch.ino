@@ -12,6 +12,7 @@
 #define BUZZERPIN 32
 #define TRIGPIN 12
 #define ECHOPIN 14
+
 #define WATERPIN 33 // Water sensor pin for rain detection
 #define LED_LIGHT 25 // LED for lights
 #define RELAY_DOOR 26  // Relay for door motor

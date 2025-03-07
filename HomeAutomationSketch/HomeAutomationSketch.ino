@@ -14,16 +14,32 @@
 #define ECHOPIN 14
 
 #define WATERPIN 33 // Water sensor pin for rain detection
+#define LED_LIGHT 25 // LED for lights
+#define RELAY_DOOR 26  // Relay for door motor
 
 DHT dht(DHTPIN, DHTTYPE);
 
 // WiFi credentials
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
-const char* apSSID = "ESP32_AP";
-const char* apPassword = "12345678";
+const char* ssid = "Zvikomborero";
+const char* password = "12345678";
+const char* apSSID = "HomeAutomationAP";
+const char* apPassword = "ShammahNemaBaddies";
+
+// Access Point Settings
+IPAddress local_ip(192, 168, 2, 1);
+IPAddress gateway(192, 168, 2, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 WebServer server(80);
+
+// Function Prototypes
+void blinkHeartbeat();
+float measureDistance();
+void handleRoot();
+void handleLightOn();
+void handleLightOff();
+void handleDoorOpen();
+void handleDoorClose();
 
 void setup() {
   Serial.begin(115200);
@@ -41,9 +57,19 @@ void setup() {
   pinMode(TRIGPIN, OUTPUT);
   pinMode(ECHOPIN, INPUT);
   pinMode(WATERPIN, INPUT);
+  pinMode(LED_LIGHT, OUTPUT);
+  pinMode(RELAY_DOOR, OUTPUT);
+
+  // Ensure Door Relay and Lights are off at startup
+  digitalWrite(LED_LIGHT, LOW);
+  digitalWrite(RELAY_DOOR, LOW);
 
   // Define web server routes
   server.on("/", handleRoot);
+  server.on("/light/on", handleLightOn);
+  server.on("/light/off", handleLightOff);
+  server.on("/door/open", handleDoorOpen);
+  server.on("/door/close", handleDoorClose);
   server.begin();
 }
 
@@ -76,13 +102,46 @@ void handleRoot() {
   html += "<p>Motion Detected: " + String(motionDetected ? "Yes" : "No") + "</p>";
   html += "<p>Distance: " + String(distance) + " cm</p>";
   html += "<p>Raining: " + String(isRaining ? "Yes" : "No") + "</p>";
-  html += "</body></html>";
+
+  // Buttons for controlling relays
+  html += "<h2>Controls</h2>";
+  html += "<p><a href='/light/on'><button>Turn Light ON</button></a> ";
+  html += "<a href='/light/off'><button>Turn Light OFF</button></a></p>";
+  html += "<p><a href='/door/open'><button>Open Door</button></a> ";
+  html += "<a href='/door/close'><button>Close Door</button></a></p>";
   
+  html += "</body></html>";
+
   server.send(200, "text/html", html);
+}
+
+// Route handlers
+void handleLightOn() {
+  digitalWrite(RELAY_LIGHT, HIGH);
+  server.send(200, "text/html", "<p>Light turned ON. <a href='/'>Go Back</a></p>");
+}
+
+void handleLightOff() {
+  digitalWrite(RELAY_LIGHT, LOW);
+  server.send(200, "text/html", "<p>Light turned OFF. <a href='/'>Go Back</a></p>");
+}
+
+void handleDoorOpen() {
+  digitalWrite(RELAY_DOOR, HIGH);
+  delay(5000); // Keep door open for 5 seconds
+  digitalWrite(RELAY_DOOR, LOW);
+  server.send(200, "text/html", "<p>Door Opened. <a href='/'>Go Back</a></p>");
+}
+
+void handleDoorClose() {
+  digitalWrite(RELAY_DOOR, LOW);
+  server.send(200, "text/html", "<p>Door Closed. <a href='/'>Go Back</a></p>");
 }
 
 void loop() {
   server.handleClient();
+
+  blinkHeartbeat();
   
   // Read sensors
   float temperature = dht.readTemperature();
@@ -109,12 +168,16 @@ void loop() {
   }
   
   // Automation Logic:
-  if (lightLevel < 500) { // Adjust threshold accordingly
-    // Activate relay to turn on lights
+  if (lightLevel < 500) {
+    digitalWrite(LED_LIGHT, HIGH); // Turn on LED for light indication
+  } else {
+    digitalWrite(LED_LIGHT, LOW); // Turn off LED
   }
   
   if (motionDetected && distance < 300) { // Open door if motion is detected and within 3 meters
-    // Activate door motor relay to open door
+    digitalWrite(RELAY_DOOR, HIGH); // Activate door motor relay to open door
+    delay(5000); // Keep door open for 5 seconds
+    digitalWrite(RELAY_DOOR, LOW);
   }
   
   if (motionDetected && distance > 300) { // If motion detected but outside the range, trigger buzzer
@@ -128,6 +191,26 @@ void loop() {
     delay(2000);
     digitalWrite(BUZZERPIN, LOW);
   }
+
   
   delay(5000); // 5 seconds
+}
+
+// On-board LED heartbeat
+void blinkHeartbeat() {
+  static long previousMillis = 0;     // Time tracker for LED toggling
+  const long waitInterval = 2000;     // Wait time between cycles (2 seconds)
+  long currentMillis = millis();      // Get the current time
+
+  // If 2 seconds have passed, start a new cycle
+  if (currentMillis - previousMillis >= waitInterval) {
+    previousMillis = currentMillis; // Reset the cycle start time
+    digitalWrite(LEDPIN, HIGH);
+    delay(heartbeatRate);
+    digitalWrite(LEDPIN, LOW);
+    delay(heartbeatRate);
+    digitalWrite(LEDPIN, HIGH);
+    delay(heartbeatRate);
+    digitalWrite(LEDPIN, LOW);
+  } 
 }

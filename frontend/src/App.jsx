@@ -4,10 +4,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // Import CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/css/landing-page.css';
+// Import signup CSS explicitly
+import './assets/css/signup.css';
 
-// Import components (we'll create these later)
+// Import components
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import SignupPage from './components/SignupPage';
 
 function App() {
   // Add animation classes on scroll
@@ -39,6 +42,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/signup" element={<SignupPage />} />
       </Routes>
     </Router>
   );

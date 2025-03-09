@@ -1,0 +1,217 @@
+/* Base styles */
+body {
+    font-family: 'Space Mono', monospace;
+    background-color: #ECEAE5;
+    color: #33171E;
+}
+
+/* Navbar styles */
+.navbar {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    color: #33171E;
+}
+
+.nav-link {
+    color: #33171E;
+    margin: 0 0.5rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #406354;
+}
+
+/* Button styles */
+.btn {
+    font-family: 'Space Mono', monospace;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    border-width: 2px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: #F2FF66;
+    border-color: #F2FF66;
+    color: #33171E;
+}
+
+.btn-primary:hover {
+    background-color: #F6FF94;
+    border-color: #F6FF94;
+    color: #33171E;
+}
+
+.btn-outline {
+    border-color: #33171E;
+    color: #33171E;
+}
+
+.btn-outline:hover {
+    background-color: rgba(51, 23, 30, 0.1);
+    color: #33171E;
+}
+
+.btn-outline-dark {
+    border-color: #33171E;
+    color: #33171E;
+    background-color: transparent;
+}
+
+.btn-outline-dark:hover {
+    background-color: rgba(51, 23, 30, 0.05);
+}
+
+/* Glass effect */
+.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+}
+
+/* Signup section styles */
+#signup {
+    position: relative;
+    background-color: #ECEAE5;
+    overflow: hidden;
+}
+
+/* Background decoration */
+#signup::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background-color: rgba(242, 255, 102, 0.3);
+    border-radius: 50%;
+    filter: blur(40px);
+    z-index: 0;
+}
+
+#signup::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 300px;
+    height: 300px;
+    background-color: rgba(64, 99, 84, 0.2);
+    border-radius: 50%;
+    filter: blur(40px);
+    z-index: 0;
+}
+
+.signup-content,
+.card {
+    position: relative;
+    z-index: 1;
+}
+
+/* Form styles */
+.form-control {
+    font-family: 'Space Mono', monospace;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(51, 23, 30, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(242, 255, 102, 0.25);
+    border-color: #F2FF66;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    color: #666;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.form-check-input:checked {
+    background-color: #F2FF66;
+    border-color: #F2FF66;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(242, 255, 102, 0.25);
+    border-color: #F2FF66;
+}
+
+/* Toggle password button */
+.toggle-password {
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(51, 23, 30, 0.2);
+    border-left: none;
+}
+
+.toggle-password:hover {
+    background-color: rgba(242, 255, 102, 0.1);
+}
+
+/* Google button */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Footer styles */
+.bg-dark-sienna {
+    background-color: #33171E;
+}
+
+.footer-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: #F2FF66;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+
+    h1.display-5 {
+        font-size: 2rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+}

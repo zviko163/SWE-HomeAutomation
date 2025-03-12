@@ -12,11 +12,15 @@ The project currently includes:
 - Testimonials from users
 - Clear call-to-action sections
 - Mobile-friendly layout that works on all devices
-- **NEW: Complete user authentication with signup functionality**
+- **Complete user authentication system**
   - Email and password registration with comprehensive validation
-  - Google sign-in integration
+  - Email and password login functionality 
+  - Google sign-in integration (for both signup and login)
   - User profile creation
   - Secure authentication via Firebase
+  - Password visibility toggling for better user experience
+  - Remember me functionality
+  - Form validation with helpful error messages
 
 ## Tech Stack
 - **Frontend**: 
@@ -34,8 +38,10 @@ The project currently includes:
 - ✅ Responsive landing page with modern design
 - ✅ User authentication system
   - ✅ Email/password registration with validation
-  - ✅ Google sign-in option
+  - ✅ Email/password login with validation
+  - ✅ Google sign-in option for both signup and login
   - ✅ Secure user profile creation
+  - ✅ Remember me functionality
 - ⬜ User-friendly dashboard interface
 - ⬜ Real-time and historical sensor data visualization
 - ⬜ Device control capabilities
@@ -51,11 +57,12 @@ SWE-HomeAutomation/
 │       ├── assets/            # Images, fonts, CSS
 │       │   ├── css/           # Stylesheet files
 │       │   │   ├── landing-page.css  # Landing page styles
-│       │   │   └── signup.css        # Signup page styles
+│       │   │   └── signup.css        # Authentication page styles
 │       │   └── images/        # Image assets including Google icon
 │       ├── components/        # Reusable UI components
 │       │   ├── LandingPage.jsx # Landing page component
-│       │   ├── SignupPage.jsx  # New signup page component
+│       │   ├── SignupPage.jsx  # Signup page component
+│       │   ├── LoginPage.jsx   # Login page component
 │       │   └── Dashboard.jsx   # Dashboard component (placeholder)
 │       ├── firebase.js        # Firebase configuration and initialization
 │       ├── App.jsx            # Main application component with routes
@@ -66,12 +73,14 @@ SWE-HomeAutomation/
 
 ## Authentication Features
 - **Form Validation**:
-  - Name validation
+  - Name validation (signup)
   - Email format validation
   - Password strength requirements (length, uppercase, lowercase, numbers, special characters)
-  - Password confirmation matching
-  - Terms and conditions acceptance
-- **User Feedback**:
+  - Password confirmation matching (signup)
+  - Terms and conditions acceptance (signup)
+- **User Experience**:
+  - Password visibility toggle
+  - Remember me functionality (login)
   - Inline error messages for invalid inputs
   - Loading indicators during authentication process
   - Success redirects to dashboard

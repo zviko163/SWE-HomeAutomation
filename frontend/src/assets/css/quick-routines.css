@@ -1,0 +1,121 @@
+/* frontend/src/assets/css/quick-routines.css */
+.quick-routines {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.routine-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.routine-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.routine-button.active {
+    background-color: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.routine-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+    color: var(--dark-sienna);
+    transition: all 0.3s ease;
+}
+
+.routine-button:hover .routine-icon {
+    transform: scale(1.1);
+}
+
+.routine-button.active .routine-icon {
+    background-color: var(--dark-sienna);
+    color: var(--primary);
+}
+
+.routine-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    color: var(--dark-sienna);
+}
+
+.routine-loader {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: var(--primary);
+    animation: loading 2s linear forwards;
+}
+
+@keyframes loading {
+    0% {
+        width: 0%;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+.add-routine {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-style: dashed;
+}
+
+.add-routine .routine-icon {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--gray-600);
+}
+
+.add-routine:hover .routine-icon {
+    background-color: var(--primary-light);
+    color: var(--dark-sienna);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .quick-routines {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .quick-routines {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+
+    .routine-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .routine-name {
+        font-size: 0.75rem;
+    }
+}

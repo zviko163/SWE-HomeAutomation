@@ -1,0 +1,143 @@
+/* frontend/src/assets/css/energy-widget.css */
+.energy-widget {
+    position: relative;
+    overflow: hidden;
+    padding: 1.25rem;
+    height: 100%;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+}
+
+.energy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.energy-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--dark-sienna);
+}
+
+.energy-period {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.energy-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.current-usage {
+    display: flex;
+    flex-direction: column;
+}
+
+.current-usage h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--dark-sienna);
+    line-height: 1;
+}
+
+.stats-divider {
+    width: 1px;
+    background-color: var(--glass-border);
+    margin: 0 1rem;
+}
+
+.total-usage {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.total-usage h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--dark-sienna);
+    line-height: 1;
+}
+
+.label {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    margin: 0.25rem 0 0 0;
+}
+
+.unit {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--gray-600);
+}
+
+.comparison {
+    font-size: 0.75rem;
+    margin: 0.5rem 0 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.text-success {
+    color: var(--success);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.energy-chart {
+    margin-top: auto;
+    height: 80px;
+}
+
+/* Chart tooltip */
+.energy-chart-tooltip {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.energy-chart-tooltip p {
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.energy-chart-tooltip .time {
+    color: var(--gray-600);
+}
+
+.energy-chart-tooltip .usage {
+    color: var(--dark-sienna);
+    font-weight: 700;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .energy-widget {
+        min-height: 180px;
+    }
+
+    .current-usage h2 {
+        font-size: 2.5rem;
+    }
+
+    .total-usage h4 {
+        font-size: 1.5rem;
+    }
+
+    .energy-chart {
+        height: 100px;
+    }
+}

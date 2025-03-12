@@ -6,6 +6,18 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/css/landing-page.css';
 // Import signup CSS explicitly
 import './assets/css/signup.css';
+// Import dashboard CSS
+import './assets/css/dashboard.css';
+// Import weather widget CSS
+import './assets/css/weather-widget.css';
+// Import energy widget CSS
+import './assets/css/energy-widget.css';
+// Import quicck routines widget CSS
+import './assets/css/quick-routines.css';
+// Import room filter widget CSS
+import './assets/css/room-filter.css';
+// Import device grid CSS
+import './assets/css/device-grid.css';
 
 // Import components
 import LandingPage from './components/LandingPage';

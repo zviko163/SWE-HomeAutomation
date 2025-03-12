@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ import './assets/css/signup.css';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import SignupPage from './components/SignupPage';
+import LoginPage from './components/LoginPage';
 
 function App() {
   // Add animation classes on scroll
@@ -43,6 +45,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </Router>
   );

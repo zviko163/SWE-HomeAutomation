@@ -1,5 +1,3 @@
-I'll update the README to include all the dashboard work we've done in this chat. Here's an enhanced version that includes our recent progress:
-
 ```markdown
 # Smart Home Automation Web App
 A web application for monitoring and controlling smart home devices with data visualization, device control, and AI-based predictions.

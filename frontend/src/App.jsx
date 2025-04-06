@@ -12,7 +12,7 @@ import './assets/css/dashboard.css';
 import './assets/css/weather-widget.css';
 // Import energy widget CSS
 import './assets/css/energy-widget.css';
-// Import quicck routines widget CSS
+// Import quick routines widget CSS
 import './assets/css/quick-routines.css';
 // Import room filter widget CSS
 import './assets/css/room-filter.css';
@@ -20,6 +20,8 @@ import './assets/css/room-filter.css';
 import './assets/css/device-grid.css';
 // Import insights page css
 import './assets/css/insights.css';
+// Import device add modal CSS
+import './assets/css/device-add-modal.css';
 
 // Import components
 import LandingPage from './components/LandingPage';
@@ -27,7 +29,7 @@ import Dashboard from './components/Dashboard';
 import SignupPage from './components/SignupPage';
 import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import InsightsPage from './components/dashboard/InsightsPage'; 
+import InsightsPage from './components/dashboard/InsightsPage';
 
 // Import auth context
 import { AuthProvider } from './context/AuthContext';
@@ -69,7 +71,7 @@ function App() {
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/insights" element={<InsightsPage />} /> {/* Add this line */}
+            <Route path="/insights" element={<InsightsPage />} />
             {/* Add more protected routes here as needed */}
           </Route>
 

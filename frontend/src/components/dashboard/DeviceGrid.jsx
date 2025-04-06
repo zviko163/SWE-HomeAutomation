@@ -1,112 +1,118 @@
-// frontend/src/components/dashboard/DeviceGrid.jsx
+// Updated DeviceGrid.jsx to accept devices from props
+
 import React, { useState, useEffect } from 'react';
 
-const DeviceGrid = ({ selectedRoom }) => {
-    const [devices, setDevices] = useState([]);
+const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [localDevices, setLocalDevices] = useState([]);
 
     useEffect(() => {
-        // In a real app, this would fetch from your backend API
-        // For now, we'll simulate with sample data
-        const fetchDevices = async () => {
-            try {
-                setLoading(true);
+        // If devices are provided via props, use them
+        if (devices.length > 0) {
+            setLocalDevices(devices);
+            setLoading(false);
+        } else {
+            // Otherwise, fetch sample data (for backward compatibility)
+            const fetchDevices = async () => {
+                try {
+                    setLoading(true);
 
-                // Simulate API loading time
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    // Simulate API loading time
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Sample device data
-                const sampleDevices = [
-                    {
-                        id: 'light-1',
-                        name: 'Ceiling Light',
-                        type: 'light',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: true, brightness: 80 },
-                        icon: 'fa-lightbulb'
-                    },
-                    {
-                        id: 'thermostat-1',
-                        name: 'Smart Thermostat',
-                        type: 'thermostat',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: true, temperature: 22, mode: 'heat' },
-                        icon: 'fa-temperature-high'
-                    },
-                    {
-                        id: 'speaker-1',
-                        name: 'Smart Speaker',
-                        type: 'speaker',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: false, volume: 0 },
-                        icon: 'fa-volume-up'
-                    },
-                    {
-                        id: 'light-2',
-                        name: 'Bedside Lamp',
-                        type: 'light',
-                        room: 'Bedroom',
-                        status: 'online',
-                        state: { on: false, brightness: 0 },
-                        icon: 'fa-lightbulb'
-                    },
-                    {
-                        id: 'fan-1',
-                        name: 'Ceiling Fan',
-                        type: 'fan',
-                        room: 'Bedroom',
-                        status: 'online',
-                        state: { on: false, speed: 0 },
-                        icon: 'fa-fan'
-                    },
-                    {
-                        id: 'door-1',
-                        name: 'Front Door',
-                        type: 'door',
-                        room: 'Kitchen',
-                        status: 'online',
-                        state: { locked: true },
-                        icon: 'fa-door-closed'
-                    },
-                    {
-                        id: 'light-3',
-                        name: 'Kitchen Lights',
-                        type: 'light',
-                        room: 'Kitchen',
-                        status: 'online',
-                        state: { on: false, brightness: 0 },
-                        icon: 'fa-lightbulb'
-                    },
-                    {
-                        id: 'camera-1',
-                        name: 'Security Camera',
-                        type: 'camera',
-                        room: 'Office',
-                        status: 'online',
-                        state: { on: true, recording: false },
-                        icon: 'fa-video'
-                    }
-                ];
+                    // Sample device data
+                    const sampleDevices = [
+                        {
+                            id: 'light-1',
+                            name: 'Ceiling Light',
+                            type: 'light',
+                            room: 'Living Room',
+                            status: 'online',
+                            state: { on: true, brightness: 80 },
+                            icon: 'fa-lightbulb'
+                        },
+                        {
+                            id: 'thermostat-1',
+                            name: 'Smart Thermostat',
+                            type: 'thermostat',
+                            room: 'Living Room',
+                            status: 'online',
+                            state: { on: true, temperature: 22, mode: 'heat' },
+                            icon: 'fa-temperature-high'
+                        },
+                        {
+                            id: 'speaker-1',
+                            name: 'Smart Speaker',
+                            type: 'speaker',
+                            room: 'Living Room',
+                            status: 'online',
+                            state: { on: false, volume: 0 },
+                            icon: 'fa-volume-up'
+                        },
+                        {
+                            id: 'light-2',
+                            name: 'Bedside Lamp',
+                            type: 'light',
+                            room: 'Bedroom',
+                            status: 'online',
+                            state: { on: false, brightness: 0 },
+                            icon: 'fa-lightbulb'
+                        },
+                        {
+                            id: 'fan-1',
+                            name: 'Ceiling Fan',
+                            type: 'fan',
+                            room: 'Bedroom',
+                            status: 'online',
+                            state: { on: false, speed: 0 },
+                            icon: 'fa-fan'
+                        },
+                        {
+                            id: 'door-1',
+                            name: 'Front Door',
+                            type: 'door',
+                            room: 'Kitchen',
+                            status: 'online',
+                            state: { locked: true },
+                            icon: 'fa-door-closed'
+                        },
+                        {
+                            id: 'light-3',
+                            name: 'Kitchen Lights',
+                            type: 'light',
+                            room: 'Kitchen',
+                            status: 'online',
+                            state: { on: false, brightness: 0 },
+                            icon: 'fa-lightbulb'
+                        },
+                        {
+                            id: 'camera-1',
+                            name: 'Security Camera',
+                            type: 'camera',
+                            room: 'Office',
+                            status: 'online',
+                            state: { on: true, recording: false },
+                            icon: 'fa-video'
+                        }
+                    ];
 
-                setDevices(sampleDevices);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching devices:', error);
-                setError('Failed to load devices');
-                setLoading(false);
-            }
-        };
+                    setLocalDevices(sampleDevices);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Error fetching devices:', error);
+                    setError('Failed to load devices');
+                    setLoading(false);
+                }
+            };
 
-        fetchDevices();
-    }, []);
+            fetchDevices();
+        }
+    }, [devices]);
 
     // Toggle device state
     const toggleDevice = (id) => {
-        setDevices(prevDevices =>
+        setLocalDevices(prevDevices =>
             prevDevices.map(device =>
                 device.id === id
                     ? { ...device, state: { ...device.state, on: !device.state.on } }
@@ -117,8 +123,8 @@ const DeviceGrid = ({ selectedRoom }) => {
 
     // Filter devices by room
     const filteredDevices = selectedRoom === 'All Rooms'
-        ? devices
-        : devices.filter(device => device.room === selectedRoom);
+        ? localDevices
+        : localDevices.filter(device => device.room === selectedRoom);
 
     // Loading state
     if (loading) {

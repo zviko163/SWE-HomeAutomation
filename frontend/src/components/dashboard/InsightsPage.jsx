@@ -5,6 +5,7 @@ import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
+import DeviceAddModal from './DeviceAddModal';
 
 const InsightsPage = () => {
     const navigate = useNavigate();
@@ -283,6 +284,15 @@ const InsightsPage = () => {
         return null;
     };
 
+    // edits to make the add modal work
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [devices, setDevices] = useState([]);
+    const handleAddDevice = (newDevice) => {
+        // In a real app, you would send this to your backend
+        // For now, we'll just add it to our local state
+        setDevices(prevDevices => [...prevDevices, newDevice]);
+    };
+
     // Loading state
     if (loading) {
         return (
@@ -311,7 +321,10 @@ const InsightsPage = () => {
                         <i className="fas fa-chart-bar"></i>
                         <span>Insights</span>
                     </button>
-                    <button className="nav-item add-button">
+                    <button
+                        className="nav-item add-button"
+                        onClick={() => setIsAddModalOpen(true)}
+                    >
                         <i className="fas fa-plus"></i>
                     </button>
                     <button className="nav-item">
@@ -362,7 +375,10 @@ const InsightsPage = () => {
                         <i className="fas fa-chart-bar"></i>
                         <span>Insights</span>
                     </button>
-                    <button className="nav-item add-button">
+                    <button
+                        className="nav-item add-button"
+                        onClick={() => setIsAddModalOpen(true)}
+                    >
                         <i className="fas fa-plus"></i>
                     </button>
                     <button className="nav-item">
@@ -629,7 +645,10 @@ const InsightsPage = () => {
                     <i className="fas fa-chart-bar"></i>
                     <span>Insights</span>
                 </button>
-                <button className="nav-item add-button">
+                <button
+                    className="nav-item add-button"
+                    onClick={() => setIsAddModalOpen(true)}
+                >
                     <i className="fas fa-plus"></i>
                 </button>
                 <button className="nav-item">
@@ -641,6 +660,11 @@ const InsightsPage = () => {
                     <span>Profile</span>
                 </button>
             </nav>
+            <DeviceAddModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onAddDevice={handleAddDevice}
+            />
         </div>
     );
 };

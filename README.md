@@ -1,4 +1,3 @@
-```markdown
 # Smart Home Automation Web App
 A web application for monitoring and controlling smart home devices with data visualization, device control, and AI-based predictions.
 
@@ -35,6 +34,14 @@ The project currently includes:
   * Interactive device cards with toggle controls
   * Support for different device types (lights, thermostats, etc.)
   * Responsive layout that works on mobile and desktop
+* Data insights page with visualization:
+  * Temperature and humidity trend charts
+  * Energy usage history visualization 
+  * Weekly comparison metrics with previous period
+  * Device usage statistics
+  * Time range selection (24h, 7 days, 30 days)
+  * Interactive charts with custom tooltips
+  * Consistent design language with the dashboard
 
 ## Tech Stack
 **Frontend:**
@@ -73,6 +80,9 @@ The project currently includes:
 ✅ Quick routine buttons for automation control  
 ✅ Room-based device filtering  
 ✅ Interactive device control cards  
+✅ Data insights with interactive charts  
+✅ Historical temperature and humidity visualization  
+✅ Weekly metrics comparison  
 ⬜ Connect to real smart home devices  
 ⬜ AI-based temperature predictions  
 ⬜ Security alerts and notifications  
@@ -93,7 +103,8 @@ SWE-HomeAutomation/
 │       │   │   ├── energy-widget.css   # Energy usage widget styles
 │       │   │   ├── quick-routines.css  # Quick routines styles
 │       │   │   ├── room-filter.css     # Room filter styles
-│       │   │   └── device-grid.css     # Device grid styles
+│       │   │   ├── device-grid.css     # Device grid styles
+│       │   │   └── insights.css        # Data insights page styles
 │       │   └── images/        # Image assets including Google icon
 │       ├── components/        # Reusable UI components
 │       │   ├── LandingPage.jsx   # Landing page component
@@ -106,7 +117,8 @@ SWE-HomeAutomation/
 │       │   │   ├── EnergyUsage.jsx   # Energy usage component
 │       │   │   ├── QuickRoutines.jsx # Quick routines component
 │       │   │   ├── RoomFilter.jsx    # Room filter component
-│       │   │   └── DeviceGrid.jsx    # Device grid component
+│       │   │   ├── DeviceGrid.jsx    # Device grid component
+│       │   │   └── InsightsPage.jsx  # Data insights page component
 │       ├── context/           # React Context for state management
 │       │   └── AuthContext.jsx    # Authentication context provider
 │       ├── firebase.js        # Firebase configuration and initialization
@@ -147,12 +159,22 @@ SWE-HomeAutomation/
 * Device-specific controls and information
 * Empty state handling when no devices are in a room
 
+**Insights Page:**
+* Temperature and humidity trend charts with dual Y-axes
+* Energy usage visualization with area charts
+* Weekly metrics comparison with previous period
+* Device usage statistics with horizontal bar charts
+* Time range selection (24h, 7 days, 30 days)
+* Interactive charts with custom tooltips
+* Responsive design that works on all device sizes
+
 **UI/UX Features:**
 * Time-based personalized greeting
 * Responsive layout that works on all devices
 * Consistent glassmorphism styling across components
 * Smooth animations and transitions
 * Loading and error states for all data-dependent components
+* Bottom navigation for easy access to key sections
 
 ## Authentication Features
 **Form Validation:**
@@ -231,6 +253,7 @@ Images of the current landing page, signup form, and dashboard will be added her
 ✅ Integrate real-time weather data  
 ✅ Implement energy usage visualization  
 ✅ Add device management interface  
+✅ Create data insights page with visualizations  
 ⬜ Develop backend API endpoints  
 ⬜ Connect frontend to backend services  
 ⬜ Implement real device control functionality  
@@ -250,4 +273,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 * Open source libraries and frameworks used in this project
 * Firebase for authentication services
 * Pirate Weather for weather data API
-```

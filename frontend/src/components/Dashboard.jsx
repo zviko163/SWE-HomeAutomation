@@ -98,7 +98,7 @@ const Dashboard = () => {
                     <i className="fas fa-home"></i>
                     <span>Home</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/insights')}>
                     <i className="fas fa-chart-bar"></i>
                     <span>Insights</span>
                 </button>

@@ -123,6 +123,7 @@ SWE-HomeAutomation/
 │       │   ├── ProtectedRoute.jsx # Route protection component
 │       │   ├── dashboard/        # Dashboard components
 │       │   │   ├── Dashboard.jsx     # Main dashboard layout
+│       │   │   ├── AutomationPage.jsx  # Automation page component
 │       │   │   ├── WeatherWidget.jsx # Weather widget component
 │       │   │   ├── EnergyUsage.jsx   # Energy usage component
 │       │   │   ├── QuickRoutines.jsx # Quick routines component

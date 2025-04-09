@@ -22,6 +22,8 @@ import './assets/css/device-grid.css';
 import './assets/css/insights.css';
 // Import device add modal CSS
 import './assets/css/device-add-modal.css';
+// CSS for automation page
+import './assets/css/automation.css';
 
 // Import components
 import LandingPage from './components/LandingPage';
@@ -30,6 +32,7 @@ import SignupPage from './components/SignupPage';
 import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import InsightsPage from './components/dashboard/InsightsPage';
+import AutomationPage from './components/dashboard/AutomationPage';
 
 // Import auth context
 import { AuthProvider } from './context/AuthContext';
@@ -72,6 +75,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/automation" element={<AutomationPage />} />
             {/* Add more protected routes here as needed */}
           </Route>
 

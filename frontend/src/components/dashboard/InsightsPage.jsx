@@ -652,7 +652,7 @@ const InsightsPage = () => {
                     <i className="fas fa-plus"></i>
                 </button>
                 <button className="nav-item">
-                    <i className="fas fa-bolt"></i>
+                    <i className="fas fa-bolt" onClick={() => navigate('/automation')}></i>
                     <span>Automation</span>
                 </button>
                 <button className="nav-item">

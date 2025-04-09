@@ -10,7 +10,7 @@ import EnergyUsage from './dashboard/EnergyUsage';
 import QuickRoutines from './dashboard/QuickRoutines';
 import DeviceGrid from './dashboard/DeviceGrid';
 import RoomFilter from './dashboard/RoomFilter';
-import DeviceAddModal from './dashboard/DeviceAddModal'; // Import the new component
+import DeviceAddModal from './dashboard/DeviceAddModal';
 
 const Dashboard = () => {
     const { currentUser } = useAuth();
@@ -149,7 +149,7 @@ const Dashboard = () => {
                 >
                     <i className="fas fa-plus"></i>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/automation')}>
                     <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>

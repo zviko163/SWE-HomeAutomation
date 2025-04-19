@@ -11,6 +11,7 @@ import QuickRoutines from './dashboard/QuickRoutines';
 import DeviceGrid from './dashboard/DeviceGrid';
 import RoomFilter from './dashboard/RoomFilter';
 import DeviceAddModal from './dashboard/DeviceAddModal';
+import ProfilePage from './dashboard/ProfilePage';
 
 const Dashboard = () => {
     const { currentUser } = useAuth();
@@ -91,6 +92,7 @@ const Dashboard = () => {
             {/* Header Section */}
             <header className="dashboard-header">
                 <div className="user-greeting">
+                    <h1><a href="/profile" style={{margin: '20px', display: 'block'}}>Go to Profile (Test Link)</a></h1>
                     <h1>{greeting}, {userName}</h1>
                     <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
@@ -153,7 +155,7 @@ const Dashboard = () => {
                     <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/profile')}>
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
                 </button>

@@ -1,0 +1,345 @@
+/* frontend/src/assets/css/insights.css */
+:root {
+    --primary: #F2FF66;
+    --primary-light: #F6FF94;
+    --secondary: #C0B395;
+    --dark-green: #406354;
+    --light-bg: #ECEAE5;
+    --dark-sienna: #33171E;
+    --white: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --card-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    --blue-accent: #1E90FF;
+    --blue-light: #87CEFA;
+    --success: #4CAF50;
+    --warning: #FFC107;
+    --danger: #F44336;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+}
+
+/* Insights Content Layout */
+.insights-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Time Range Selector */
+.insights-time-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.time-range-selector {
+    display: flex;
+    gap: 0.5rem;
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 25px;
+    padding: 0.25rem;
+}
+
+.time-btn {
+    background-color: transparent;
+    border: none;
+    color: var(--dark-sienna);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.time-btn.active {
+    background-color: var(--primary);
+    color: var(--dark-sienna);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Insights Sections */
+.insights-section {
+    position: relative;
+    padding: 1.25rem;
+    overflow: hidden;
+}
+
+.insights-section-header {
+    margin-bottom: 1.25rem;
+}
+
+.insights-section-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--dark-sienna);
+}
+
+.insights-chart-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Custom Tooltip Styles */
+.custom-tooltip {
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Space Mono', monospace;
+}
+
+.tooltip-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--dark-sienna);
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.25rem;
+}
+
+.tooltip-temp,
+.tooltip-humidity,
+.tooltip-energy,
+.tooltip-usage {
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tooltip-temp {
+    color: var(--danger);
+}
+
+.tooltip-humidity {
+    color: var(--blue-accent);
+}
+
+.tooltip-energy {
+    color: var(--dark-green);
+}
+
+.tooltip-usage {
+    color: var(--dark-sienna);
+}
+
+.tooltip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+}
+
+/* Weekly Comparison Styles */
+.weekly-comparison-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.comparison-period {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.comparison-dates {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.current-period {
+    font-weight: 700;
+    color: var(--dark-sienna);
+}
+
+.vs {
+    font-style: italic;
+    color: var(--gray-600);
+    font-size: 0.75rem;
+}
+
+.previous-period {
+    color: var(--gray-600);
+}
+
+.comparison-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.comparison-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.comparison-item:last-child {
+    border-bottom: none;
+}
+
+.comparison-category {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark-sienna);
+}
+
+.comparison-values {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin-right: 1rem;
+}
+
+.current-value {
+    font-weight: 700;
+    color: var(--dark-sienna);
+}
+
+.vs-arrow {
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.previous-value {
+    color: var(--gray-600);
+}
+
+.comparison-change {
+    font-weight: 700;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    text-align: right;
+    min-width: 60px;
+}
+
+.comparison-change.positive {
+    color: var(--success);
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.comparison-change.negative {
+    color: var(--danger);
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Loading and Error States */
+.insights-loading,
+.insights-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.insights-loading .loading-pulse {
+    margin-bottom: 1rem;
+}
+
+.insights-loading p {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+}
+
+.insights-error {
+    color: var(--warning);
+}
+
+.insights-error i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.insights-error h3 {
+    color: var(--dark-sienna);
+    margin: 0 0 0.5rem 0;
+}
+
+.insights-error p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+    .insights-section {
+        padding: 1.5rem;
+    }
+
+    .insights-section-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .comparison-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem 2rem;
+    }
+
+    .comparison-item:nth-child(even) {
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .comparison-item:nth-last-child(-n+2) {
+        border-bottom: none;
+    }
+}
+
+@media (min-width: 992px) {
+    .insights-content {
+        gap: 1.5rem;
+    }
+
+    .time-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1.25rem;
+    }
+
+    .comparison-metrics {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .comparison-item:nth-child(3n) {
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .comparison-item:nth-last-child(-n+3) {
+        border-bottom: none;
+    }
+}

@@ -1,4 +1,5 @@
-// frontend/src/components/dashboard/Dashboard.jsx
+// Updated Dashboard.jsx with DeviceAddModal integration
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,12 +10,19 @@ import EnergyUsage from './dashboard/EnergyUsage';
 import QuickRoutines from './dashboard/QuickRoutines';
 import DeviceGrid from './dashboard/DeviceGrid';
 import RoomFilter from './dashboard/RoomFilter';
+import DeviceAddModal from './dashboard/DeviceAddModal';
 
 const Dashboard = () => {
     const { currentUser } = useAuth();
     const [greeting, setGreeting] = useState('');
     const [selectedRoom, setSelectedRoom] = useState('All Rooms');
     const navigate = useNavigate();
+
+    // State for managing devices
+    const [devices, setDevices] = useState([]);
+
+    // State for controlling modal visibility
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // Get time-based greeting
     useEffect(() => {
@@ -26,6 +34,32 @@ const Dashboard = () => {
         };
 
         setGreeting(getGreeting());
+
+        // In a real app, you would fetch devices from your backend here
+        // For now, we'll use some sample data
+        const sampleDevices = [
+            {
+                id: 'light-1',
+                name: 'Ceiling Light',
+                type: 'light',
+                room: 'Living Room',
+                status: 'online',
+                state: { on: true, brightness: 80 },
+                icon: 'fa-lightbulb'
+            },
+            {
+                id: 'thermostat-1',
+                name: 'Smart Thermostat',
+                type: 'thermostat',
+                room: 'Living Room',
+                status: 'online',
+                state: { on: true, temperature: 22, mode: 'heat' },
+                icon: 'fa-temperature-high'
+            },
+            // Add more sample devices as needed
+        ];
+
+        setDevices(sampleDevices);
     }, []);
 
     const handleLogout = async () => {
@@ -39,6 +73,13 @@ const Dashboard = () => {
 
     const handleRoomChange = (room) => {
         setSelectedRoom(room);
+    };
+
+    // Handle adding a new device
+    const handleAddDevice = (newDevice) => {
+        // In a real app, you would send this to your backend
+        // For now, we'll just add it to our local state
+        setDevices(prevDevices => [...prevDevices, newDevice]);
     };
 
     // Get user's display name, fallback to email if name isn't set, or 'User' as last resort
@@ -88,7 +129,7 @@ const Dashboard = () => {
                         <h2>Devices</h2>
                         <RoomFilter selectedRoom={selectedRoom} onRoomChange={handleRoomChange} />
                     </div>
-                    <DeviceGrid selectedRoom={selectedRoom} />
+                    <DeviceGrid selectedRoom={selectedRoom} devices={devices} />
                 </section>
             </main>
 
@@ -98,14 +139,17 @@ const Dashboard = () => {
                     <i className="fas fa-home"></i>
                     <span>Home</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/insights')}>
                     <i className="fas fa-chart-bar"></i>
                     <span>Insights</span>
                 </button>
-                <button className="nav-item add-button">
+                <button
+                    className="nav-item add-button"
+                    onClick={() => setIsAddModalOpen(true)}
+                >
                     <i className="fas fa-plus"></i>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/automation')}>
                     <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
@@ -114,6 +158,13 @@ const Dashboard = () => {
                     <span>Profile</span>
                 </button>
             </nav>
+
+            {/* Device Add Modal */}
+            <DeviceAddModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onAddDevice={handleAddDevice}
+            />
         </div>
     );
 };

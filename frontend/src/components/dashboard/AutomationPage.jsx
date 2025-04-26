@@ -869,7 +869,7 @@ const AutomationPage = () => {
                     <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/profile')}>
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
                 </button>

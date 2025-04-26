@@ -24,6 +24,8 @@ import './assets/css/insights.css';
 import './assets/css/device-add-modal.css';
 // CSS for automation page
 import './assets/css/automation.css';
+// CSS for profile page
+import './assets/css/profile.css';
 
 // Import components
 import LandingPage from './components/LandingPage';
@@ -33,6 +35,7 @@ import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import InsightsPage from './components/dashboard/InsightsPage';
 import AutomationPage from './components/dashboard/AutomationPage';
+import ProfilePage from './components/dashboard/ProfilePage';
 
 // Import auth context
 import { AuthProvider } from './context/AuthContext';
@@ -76,7 +79,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/automation" element={<AutomationPage />} />
-            {/* Add more protected routes here as needed */}
+            <Route path="/profile" element={<ProfilePage />} /> {/* Make sure this line exists */}
           </Route>
 
           {/* Catch all route - redirect to home */}

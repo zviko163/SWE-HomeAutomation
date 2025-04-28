@@ -12,6 +12,7 @@ import DeviceGrid from './dashboard/DeviceGrid';
 import RoomFilter from './dashboard/RoomFilter';
 import DeviceAddModal from './dashboard/DeviceAddModal';
 import ProfilePage from './dashboard/ProfilePage';
+import NotificationsPopup from './dashboard/NotificationsPopup';
 
 const Dashboard = () => {
     const { currentUser } = useAuth();
@@ -24,6 +25,37 @@ const Dashboard = () => {
 
     // State for controlling modal visibility
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    // State variables for notifications
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [notifications, setNotifications] = useState([
+        {
+            id: 1,
+            message: "Temperature in Living Room is above normal",
+            time: "5 minutes ago",
+            read: false,
+            icon: "fa-temperature-high"
+        },
+        {
+            id: 2,
+            message: "Front door was opened",
+            time: "20 minutes ago",
+            read: false,
+            icon: "fa-door-open"
+        },
+        {
+            id: 3,
+            message: "Energy usage reduced by 10% this week",
+            time: "1 hour ago",
+            read: true,
+            icon: "fa-bolt"
+        }
+    ]);
+
+    // Toggle notifications popup
+    const toggleNotifications = () => {
+        setIsNotificationsOpen(!isNotificationsOpen);
+    };
 
     // Get time-based greeting
     useEffect(() => {
@@ -97,15 +129,22 @@ const Dashboard = () => {
                     <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
                 <div className="header-actions">
-                    <button className="icon-button notification-btn">
+                    <button className="icon-button notification-btn" onClick={toggleNotifications}>
                         <i className="fas fa-bell"></i>
+                        {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
                     </button>
-                    <button className="icon-button settings-btn">
+                    <button className="icon-button settings-btn" onClick={() => navigate('/profile')}>
                         <i className="fas fa-cog"></i>
                     </button>
                     <button className="icon-button profile-btn" onClick={handleLogout}>
                         <i className="fas fa-sign-out-alt"></i>
                     </button>
+
+                    <NotificationsPopup
+                        isOpen={isNotificationsOpen}
+                        onClose={() => setIsNotificationsOpen(false)}
+                        notifications={notifications}
+                    />
                 </div>
             </header>
 

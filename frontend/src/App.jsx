@@ -26,6 +26,8 @@ import './assets/css/device-add-modal.css';
 import './assets/css/automation.css';
 // CSS for profile page
 import './assets/css/profile.css';
+// css for the notifiactions components
+import './assets/css/notifications.css';
 
 // Import components
 import LandingPage from './components/LandingPage';

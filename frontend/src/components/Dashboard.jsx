@@ -92,7 +92,7 @@ const Dashboard = () => {
             {/* Header Section */}
             <header className="dashboard-header">
                 <div className="user-greeting">
-                    <h1><a href="/profile" style={{margin: '20px', display: 'block'}}>Go to Profile (Test Link)</a></h1>
+                    
                     <h1>{greeting}, {userName}</h1>
                     <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>

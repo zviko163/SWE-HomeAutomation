@@ -79,7 +79,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/automation" element={<AutomationPage />} />
-            <Route path="/profile" element={<ProfilePage />} /> {/* Make sure this line exists */}
+            <Route path="/profile" element={<ProfilePage />} /> 
           </Route>
 
           {/* Catch all route - redirect to home */}

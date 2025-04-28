@@ -325,7 +325,7 @@ const ProfilePage = () => {
             )}
           </div>
 
-          <div className="profile-content">
+          <div className="account-info-content">
             <div className="profile-picture-container">
               <div className="profile-picture">
                 {profileData.photoURL ? (
@@ -407,28 +407,28 @@ const ProfilePage = () => {
                 </div>
               </form>
             ) : (
-              <div className="profile-details">
-                <div className="detail-row">
-                  <div className="detail-label">Name:</div>
-                  <div className="detail-value">{profileData.displayName || 'Not set'}</div>
-                </div>
-                <div className="detail-row">
-                  <div className="detail-label">Email:</div>
-                  <div className="detail-value">{profileData.email}</div>
-                </div>
-                <div className="detail-row">
-                  <div className="detail-label">Member Since:</div>
-                  <div className="detail-value">
-                    {currentUser?.metadata?.creationTime
-                      ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })
-                      : 'Unknown'}
-                  </div>
-                </div>
-              </div>
+                              <div className="profile-details">
+                                  <div className="detail-row">
+                                      <div className="detail-label">Name:</div>
+                                      <div className="detail-value">{profileData.displayName || 'Not set'}</div>
+                                  </div>
+                                  <div className="detail-row">
+                                      <div className="detail-label">Email:</div>
+                                      <div className="detail-value">{profileData.email}</div>
+                                  </div>
+                                  <div className="detail-row">
+                                      <div className="detail-label">Member Since:</div>
+                                      <div className="detail-value">
+                                          {currentUser?.metadata?.creationTime
+                                              ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', {
+                                                  month: 'long',
+                                                  day: 'numeric',
+                                                  year: 'numeric'
+                                              })
+                                              : 'Unknown'}
+                                      </div>
+                                  </div>
+                              </div>
             )}
           </div>
         </section>

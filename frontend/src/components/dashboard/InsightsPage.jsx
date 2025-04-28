@@ -651,11 +651,11 @@ const InsightsPage = () => {
                 >
                     <i className="fas fa-plus"></i>
                 </button>
-                <button className="nav-item">
-                    <i className="fas fa-bolt" onClick={() => navigate('/automation')}></i>
+                <button className="nav-item" onClick={() => navigate('/automation')}>
+                    <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/profile')}>
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
                 </button>

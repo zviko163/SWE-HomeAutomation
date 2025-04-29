@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext'; // Add this import
 import { socketEvents } from '../../utils/socketEvents';
+import deviceService from '../../services/deviceService';
 
 const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     const [loading, setLoading] = useState(true);
@@ -95,15 +96,19 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
 
                 // Try to fetch from API first
                 try {
-                    const response = await fetch('/api/devices');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setLocalDevices(data.data);
-                        setLoading(false);
-                        return; // Exit if API call successful
+                    let devicesData;
+                    if (selectedRoom !== 'All Rooms') {
+                        // If a specific room is selected, fetch devices for that room
+                        devicesData = await deviceService.getDevicesByRoom(selectedRoom);
+                    } else {
+                        // Otherwise fetch all devices
+                        devicesData = await deviceService.getDevices();
                     }
+                    setLocalDevices(devicesData);
+                    setLoading(false);
+                    return; // Exit if API call successful
                 } catch (err) {
-                    console.log('API fetch failed, using sample data instead');
+                    console.log('API fetch failed, using fallback data');
                 }
 
                 // If API fails or devices prop is empty, use the sample data
@@ -124,7 +129,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         };
 
         fetchDevices();
-    }, [devices]);
+    }, [devices, selectedRoom]);
 
     // Set up socket listeners when socket is available
     useEffect(() => {
@@ -206,18 +211,10 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
                 )
             );
 
-            // Make API call to update device state
-            const response = await fetch(`/api/devices/${id}/state`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ on: !device.state.on }),
+            // Make API call to update device state using our service
+            await deviceService.updateDeviceState(id, {
+                on: !device.state.on
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to update device state');
-            }
 
             // Note: We don't need to update state here since the socket event will handle it
 

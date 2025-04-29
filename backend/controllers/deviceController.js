@@ -1,5 +1,6 @@
 const Device = require('../models/Device');
 const asyncHandler = require('express-async-handler');
+const socketEvents = require('../utils/socketEvents');
 
 /**
  * @desc    Get all devices with optional filtering
@@ -75,6 +76,12 @@ const createDevice = asyncHandler(async (req, res) => {
         lastUpdated: Date.now()
     });
 
+    // Emit socket event for new device
+    req.io.emit(socketEvents.DEVICE_ADDED, device);
+
+    // Also emit to the specific room channel
+    req.io.to(room.replace(/\s+/g, '-').toLowerCase()).emit(socketEvents.DEVICE_ADDED, device);
+
     res.status(201).json(device);
 });
 
@@ -91,6 +98,9 @@ const updateDevice = asyncHandler(async (req, res) => {
         throw new Error('Device not found');
     }
 
+    // Store original room for socket emit
+    const originalRoom = device.room;
+
     // Update device
     const updatedDevice = await Device.findByIdAndUpdate(
         req.params.id,
@@ -100,6 +110,20 @@ const updateDevice = asyncHandler(async (req, res) => {
         },
         { new: true }
     );
+
+    // Emit socket event for updated device
+    req.io.emit(socketEvents.DEVICE_UPDATED, updatedDevice); 
+
+    // If room changed, emit to both rooms
+    if (originalRoom !== updatedDevice.room) { 
+        req.io.to(originalRoom.replace(/\s+/g, '-').toLowerCase())
+            .emit(socketEvents.DEVICE_UPDATED, updatedDevice);
+        req.io.to(updatedDevice.room.replace(/\s+/g, '-').toLowerCase())
+            .emit(socketEvents.DEVICE_UPDATED, updatedDevice);
+    } else {
+        req.io.to(updatedDevice.room.replace(/\s+/g, '-').toLowerCase())
+            .emit(socketEvents.DEVICE_UPDATED, updatedDevice);
+    }
 
     res.json(updatedDevice);
 });
@@ -123,6 +147,21 @@ const updateDeviceState = asyncHandler(async (req, res) => {
 
     const updatedDevice = await device.save();
 
+    // Emit socket event for device state change
+    req.io.emit(socketEvents.DEVICE_STATE_CHANGED, { // Add this block
+        id: updatedDevice._id,
+        state: updatedDevice.state,
+        room: updatedDevice.room
+    });
+
+    // Also emit to the specific room
+    req.io.to(updatedDevice.room.replace(/\s+/g, '-').toLowerCase())
+        .emit(socketEvents.DEVICE_STATE_CHANGED, {
+            id: updatedDevice._id,
+            state: updatedDevice.state,
+            room: updatedDevice.room
+        });
+    
     res.json(updatedDevice);
 });
 
@@ -139,7 +178,18 @@ const deleteDevice = asyncHandler(async (req, res) => {
         throw new Error('Device not found');
     }
 
+    // Get the room before deletion for socket emit
+    const deviceRoom = device.room; 
+    const deviceId = device._id;
+
     await device.deleteOne();
+
+    // Emit socket event for device removal
+    req.io.emit(socketEvents.DEVICE_REMOVED, { id: deviceId });
+
+    // Also emit to the specific room
+    req.io.to(deviceRoom.replace(/\s+/g, '-').toLowerCase())
+        .emit(socketEvents.DEVICE_REMOVED, { id: deviceId });
 
     res.json({ message: 'Device removed' });
 });

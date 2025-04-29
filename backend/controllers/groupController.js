@@ -1,6 +1,7 @@
 const DeviceGroup = require('../models/DeviceGroup');
 const Device = require('../models/Device');
 const asyncHandler = require('express-async-handler');
+const socketEvents = require('../utils/socketEvents');
 
 /**
  * @desc    Get all device groups
@@ -67,6 +68,9 @@ const createGroup = asyncHandler(async (req, res) => {
 
     const populatedGroup = await DeviceGroup.findById(group._id).populate('devices', 'name type status');
 
+    // Emit socket event for new group
+    req.io.emit(socketEvents.GROUP_ADDED, populatedGroup);
+
     res.status(201).json(populatedGroup);
 });
 
@@ -102,6 +106,9 @@ const updateGroup = asyncHandler(async (req, res) => {
         { new: true }
     ).populate('devices', 'name type status');
 
+    // Emit socket event for updated group
+    req.io.emit(socketEvents.GROUP_UPDATED, updatedGroup); 
+
     res.json(updatedGroup);
 });
 
@@ -119,6 +126,9 @@ const deleteGroup = asyncHandler(async (req, res) => {
     }
 
     await group.deleteOne();
+
+    // Emit socket event for group removal
+    req.io.emit(socketEvents.GROUP_REMOVED, { id: req.params.id });
 
     res.json({ message: 'Group removed' });
 });
@@ -159,6 +169,13 @@ const controlGroup = asyncHandler(async (req, res) => {
 
     // Filter out null promises and execute all updates
     await Promise.all(updatePromises.filter(promise => promise !== null));
+
+    // Emit socket event for group control action
+    req.io.emit(socketEvents.DEVICE_STATE_CHANGED, {
+        groupId: req.params.id,
+        action: action,
+        affectedDevices: group.devices.map(device => device._id)
+    });
 
     res.json({
         message: `All devices in group ${action === 'on' ? 'turned on' : 'turned off'}`

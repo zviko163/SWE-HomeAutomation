@@ -1,6 +1,7 @@
 const Schedule = require('../models/Schedule');
 const Device = require('../models/Device');
 const asyncHandler = require('express-async-handler');
+const socketEvents = require('../utils/socketEvents');
 
 /**
  * @desc    Get all schedules
@@ -79,6 +80,9 @@ const createSchedule = asyncHandler(async (req, res) => {
 
     const populatedSchedule = await Schedule.findById(schedule._id).populate('devices', 'name type status');
 
+    // Emit socket event for new schedule
+    req.io.emit(socketEvents.SCHEDULE_ADDED, populatedSchedule); 
+
     res.status(201).json(populatedSchedule);
 });
 
@@ -125,6 +129,9 @@ const updateSchedule = asyncHandler(async (req, res) => {
         { new: true }
     ).populate('devices', 'name type status');
 
+    // Emit socket event for updated schedule
+    req.io.emit(socketEvents.SCHEDULE_UPDATED, updatedSchedule);
+
     res.json(updatedSchedule);
 });
 
@@ -144,6 +151,12 @@ const toggleSchedule = asyncHandler(async (req, res) => {
     // Toggle active status
     schedule.active = !schedule.active;
     await schedule.save();
+
+    // Emit socket event for schedule toggle
+    req.io.emit(socketEvents.SCHEDULE_UPDATED, {
+        id: schedule._id,
+        active: schedule.active
+    });
 
     res.json({
         success: true,
@@ -166,6 +179,9 @@ const deleteSchedule = asyncHandler(async (req, res) => {
     }
 
     await schedule.deleteOne();
+
+    // Emit socket event for schedule removal
+    req.io.emit(socketEvents.SCHEDULE_REMOVED, { id: req.params.id });
 
     res.json({ message: 'Schedule removed' });
 });

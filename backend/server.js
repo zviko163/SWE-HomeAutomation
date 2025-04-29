@@ -9,6 +9,8 @@ const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 const sensorRoutes = require('./routes/sensorRoutes');
 const deviceRoutes = require('./routes/deviceRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const groupRoutes = require('./routes/groupRoutes');
+const scheduleRoutes = require('./routes/scheduleRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +34,8 @@ app.get('/', (req, res) => {
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/groups', groupRoutes);
+app.use('/api/schedules', scheduleRoutes);
 
 // Error handling middleware
 app.use(notFound);

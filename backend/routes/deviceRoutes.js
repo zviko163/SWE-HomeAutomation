@@ -4,23 +4,31 @@ const {
     getDevices,
     getDeviceById,
     createDevice,
-    updateDeviceState
+    updateDevice,
+    updateDeviceState,
+    deleteDevice,
+    getDevicesByRoom
 } = require('../controllers/deviceController');
 
-// @route   GET api/devices
-// @desc    Get all devices
+// Get all devices with optional filtering
 router.get('/', getDevices);
 
-// @route   GET api/devices/:id
-// @desc    Get device by ID
+// Get devices by room
+router.get('/room/:roomName', getDevicesByRoom);
+
+// Get device by ID
 router.get('/:id', getDeviceById);
 
-// @route   POST api/devices
-// @desc    Create new device
+// Create new device
 router.post('/', createDevice);
 
-// @route   PUT api/devices/:id/state
-// @desc    Update device state
+// Update device
+router.put('/:id', updateDevice);
+
+// Update device state
 router.put('/:id/state', updateDeviceState);
+
+// Delete device
+router.delete('/:id', deleteDevice);
 
 module.exports = router;

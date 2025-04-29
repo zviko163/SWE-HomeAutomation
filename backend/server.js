@@ -7,6 +7,8 @@ const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 // Import Routes
 const sensorRoutes = require('./routes/sensorRoutes');
+const deviceRoutes = require('./routes/deviceRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -28,13 +30,15 @@ app.get('/', (req, res) => {
 
 // Mount routes
 app.use('/api/sensors', sensorRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
 // Define port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Start server
 app.listen(PORT, () => {

@@ -1,6 +1,8 @@
 // frontend/src/components/dashboard/AutomationPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../../context/SocketContext';
+import { socketEvents } from '../../utils/socketEvents';
 import DeviceAddModal from './DeviceAddModal';
 
 const AutomationPage = () => {
@@ -17,6 +19,8 @@ const AutomationPage = () => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [editMode, setEditMode] = useState(false);
+    const { socket, isConnected } = useSocket();
+    const hasLoadedRef = useRef(false);
 
     // Sample days for scheduling
     const days = [
@@ -29,179 +33,257 @@ const AutomationPage = () => {
         { id: 'sun', name: 'Sun', selected: false }
     ];
 
+    // Sample Devices Data
+    const sampleDevices = [
+        {
+            id: 'light-1',
+            name: 'Ceiling Light',
+            type: 'light',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, brightness: 80 },
+            icon: 'fa-lightbulb'
+        },
+        {
+            id: 'thermostat-1',
+            name: 'Smart Thermostat',
+            type: 'thermostat',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, temperature: 22, mode: 'heat' },
+            icon: 'fa-temperature-high'
+        },
+        {
+            id: 'speaker-1',
+            name: 'Smart Speaker',
+            type: 'speaker',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: false, volume: 0 },
+            icon: 'fa-volume-up'
+        },
+        {
+            id: 'light-2',
+            name: 'Bedside Lamp',
+            type: 'light',
+            room: 'Bedroom',
+            status: 'online',
+            state: { on: false, brightness: 0 },
+            icon: 'fa-lightbulb'
+        },
+        {
+            id: 'fan-1',
+            name: 'Ceiling Fan',
+            type: 'fan',
+            room: 'Bedroom',
+            status: 'online',
+            state: { on: false, speed: 0 },
+            icon: 'fa-fan'
+        },
+        {
+            id: 'door-1',
+            name: 'Front Door',
+            type: 'door',
+            room: 'Kitchen',
+            status: 'online',
+            state: { locked: true },
+            icon: 'fa-door-closed'
+        },
+        {
+            id: 'light-3',
+            name: 'Kitchen Lights',
+            type: 'light',
+            room: 'Kitchen',
+            status: 'online',
+            state: { on: false, brightness: 0 },
+            icon: 'fa-lightbulb'
+        }
+    ];
+
+    // Sample Schedules
+    const sampleSchedules = [
+        {
+            id: 'schedule-1',
+            name: 'Morning Lights',
+            deviceIds: ['light-1', 'light-3'],
+            timeOn: '07:00',
+            timeOff: '08:30',
+            days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+            active: true,
+            color: '#F2FF66' // Primary color
+        },
+        {
+            id: 'schedule-2',
+            name: 'Evening Mode',
+            deviceIds: ['light-1', 'light-2', 'thermostat-1'],
+            timeOn: '18:00',
+            timeOff: '22:30',
+            days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+            active: true,
+            color: '#C0B395' // Secondary color
+        },
+        {
+            id: 'schedule-3',
+            name: 'Weekend Comfort',
+            deviceIds: ['thermostat-1', 'speaker-1'],
+            timeOn: '09:30',
+            timeOff: '23:00',
+            days: ['sat', 'sun'],
+            active: false,
+            color: '#406354' // Dark green color
+        }
+    ];
+
+    // Sample Rooms
+    const sampleRooms = [
+        {
+            id: 'living-room',
+            name: 'Living Room',
+            deviceCount: 3,
+            icon: 'fa-couch'
+        },
+        {
+            id: 'bedroom',
+            name: 'Bedroom',
+            deviceCount: 2,
+            icon: 'fa-bed'
+        },
+        {
+            id: 'kitchen',
+            name: 'Kitchen',
+            deviceCount: 2,
+            icon: 'fa-utensils'
+        },
+        {
+            id: 'bathroom',
+            name: 'Bathroom',
+            deviceCount: 0,
+            icon: 'fa-bath'
+        },
+        {
+            id: 'office',
+            name: 'Office',
+            deviceCount: 0,
+            icon: 'fa-briefcase'
+        }
+    ];
+
+    // Sample Device Groups
+    const sampleGroups = [
+        {
+            id: 'group-1',
+            name: 'All Lights',
+            deviceIds: ['light-1', 'light-2', 'light-3'],
+            icon: 'fa-lightbulb',
+            color: '#F2FF66' // Primary color
+        },
+        {
+            id: 'group-2',
+            name: 'Climate Control',
+            deviceIds: ['thermostat-1', 'fan-1'],
+            icon: 'fa-temperature-high',
+            color: '#406354' // Dark green color
+        },
+        {
+            id: 'group-3',
+            name: 'Security',
+            deviceIds: ['door-1'],
+            icon: 'fa-shield-alt',
+            color: '#C0B395' // Secondary color
+        }
+    ];
+
+    // Socket.io listeners for schedules and groups
+    useEffect(() => {
+        if (!socket || !isConnected) return;
+
+        // Handle schedule updates
+        const handleScheduleAdded = (schedule) => {
+            setSchedules(prev => [...prev, schedule]);
+        };
+
+        const handleScheduleUpdated = (updatedSchedule) => {
+            // If it's just an update notification with id and active status
+            if (updatedSchedule.id && typeof updatedSchedule.active !== 'undefined') {
+                setSchedules(prev =>
+                    prev.map(schedule =>
+                        schedule.id === updatedSchedule.id
+                            ? { ...schedule, active: updatedSchedule.active }
+                            : schedule
+                    )
+                );
+            } else {
+                // Full update
+                setSchedules(prev =>
+                    prev.map(schedule =>
+                        schedule.id === updatedSchedule.id
+                            ? updatedSchedule
+                            : schedule
+                    )
+                );
+            }
+        };
+
+        const handleScheduleRemoved = (data) => {
+            setSchedules(prev => prev.filter(schedule => schedule.id !== data.id));
+        };
+
+        // Handle group updates
+        const handleGroupAdded = (group) => {
+            setDeviceGroups(prev => [...prev, group]);
+        };
+
+        const handleGroupUpdated = (updatedGroup) => {
+            setDeviceGroups(prev =>
+                prev.map(group =>
+                    group.id === updatedGroup.id
+                        ? updatedGroup
+                        : group
+                )
+            );
+        };
+
+        const handleGroupRemoved = (data) => {
+            setDeviceGroups(prev => prev.filter(group => group.id !== data.id));
+        };
+
+        // Register event listeners
+        socket.on(socketEvents.SCHEDULE_ADDED, handleScheduleAdded);
+        socket.on(socketEvents.SCHEDULE_UPDATED, handleScheduleUpdated);
+        socket.on(socketEvents.SCHEDULE_REMOVED, handleScheduleRemoved);
+        socket.on(socketEvents.GROUP_ADDED, handleGroupAdded);
+        socket.on(socketEvents.GROUP_UPDATED, handleGroupUpdated);
+        socket.on(socketEvents.GROUP_REMOVED, handleGroupRemoved);
+
+        // Cleanup listeners on component unmount
+        return () => {
+            socket.off(socketEvents.SCHEDULE_ADDED, handleScheduleAdded);
+            socket.off(socketEvents.SCHEDULE_UPDATED, handleScheduleUpdated);
+            socket.off(socketEvents.SCHEDULE_REMOVED, handleScheduleRemoved);
+            socket.off(socketEvents.GROUP_ADDED, handleGroupAdded);
+            socket.off(socketEvents.GROUP_UPDATED, handleGroupUpdated);
+            socket.off(socketEvents.GROUP_REMOVED, handleGroupRemoved);
+        };
+    }, [socket, isConnected]);
+
     // Fetch sample data
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
 
-                // Simulate API call
+                // Simulate API call delay
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Sample Devices Data
-                const sampleDevices = [
-                    {
-                        id: 'light-1',
-                        name: 'Ceiling Light',
-                        type: 'light',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: true, brightness: 80 },
-                        icon: 'fa-lightbulb'
-                    },
-                    {
-                        id: 'thermostat-1',
-                        name: 'Smart Thermostat',
-                        type: 'thermostat',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: true, temperature: 22, mode: 'heat' },
-                        icon: 'fa-temperature-high'
-                    },
-                    {
-                        id: 'speaker-1',
-                        name: 'Smart Speaker',
-                        type: 'speaker',
-                        room: 'Living Room',
-                        status: 'online',
-                        state: { on: false, volume: 0 },
-                        icon: 'fa-volume-up'
-                    },
-                    {
-                        id: 'light-2',
-                        name: 'Bedside Lamp',
-                        type: 'light',
-                        room: 'Bedroom',
-                        status: 'online',
-                        state: { on: false, brightness: 0 },
-                        icon: 'fa-lightbulb'
-                    },
-                    {
-                        id: 'fan-1',
-                        name: 'Ceiling Fan',
-                        type: 'fan',
-                        room: 'Bedroom',
-                        status: 'online',
-                        state: { on: false, speed: 0 },
-                        icon: 'fa-fan'
-                    },
-                    {
-                        id: 'door-1',
-                        name: 'Front Door',
-                        type: 'door',
-                        room: 'Kitchen',
-                        status: 'online',
-                        state: { locked: true },
-                        icon: 'fa-door-closed'
-                    },
-                    {
-                        id: 'light-3',
-                        name: 'Kitchen Lights',
-                        type: 'light',
-                        room: 'Kitchen',
-                        status: 'online',
-                        state: { on: false, brightness: 0 },
-                        icon: 'fa-lightbulb'
-                    }
-                ];
+                // Only use sample data if nothing has been loaded
+                if (!hasLoadedRef.current) {
+                    if (devices.length === 0) setDevices(sampleDevices);
+                    if (schedules.length === 0) setSchedules(sampleSchedules);
+                    if (rooms.length === 0) setRooms(sampleRooms);
+                    if (deviceGroups.length === 0) setDeviceGroups(sampleGroups);
+                    hasLoadedRef.current = true;
+                }
 
-                // Sample Schedules
-                const sampleSchedules = [
-                    {
-                        id: 'schedule-1',
-                        name: 'Morning Lights',
-                        deviceIds: ['light-1', 'light-3'],
-                        timeOn: '07:00',
-                        timeOff: '08:30',
-                        days: ['mon', 'tue', 'wed', 'thu', 'fri'],
-                        active: true,
-                        color: '#F2FF66' // Primary color
-                    },
-                    {
-                        id: 'schedule-2',
-                        name: 'Evening Mode',
-                        deviceIds: ['light-1', 'light-2', 'thermostat-1'],
-                        timeOn: '18:00',
-                        timeOff: '22:30',
-                        days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-                        active: true,
-                        color: '#C0B395' // Secondary color
-                    },
-                    {
-                        id: 'schedule-3',
-                        name: 'Weekend Comfort',
-                        deviceIds: ['thermostat-1', 'speaker-1'],
-                        timeOn: '09:30',
-                        timeOff: '23:00',
-                        days: ['sat', 'sun'],
-                        active: false,
-                        color: '#406354' // Dark green color
-                    }
-                ];
-
-                // Sample Rooms
-                const sampleRooms = [
-                    {
-                        id: 'living-room',
-                        name: 'Living Room',
-                        deviceCount: 3,
-                        icon: 'fa-couch'
-                    },
-                    {
-                        id: 'bedroom',
-                        name: 'Bedroom',
-                        deviceCount: 2,
-                        icon: 'fa-bed'
-                    },
-                    {
-                        id: 'kitchen',
-                        name: 'Kitchen',
-                        deviceCount: 2,
-                        icon: 'fa-utensils'
-                    },
-                    {
-                        id: 'bathroom',
-                        name: 'Bathroom',
-                        deviceCount: 0,
-                        icon: 'fa-bath'
-                    },
-                    {
-                        id: 'office',
-                        name: 'Office',
-                        deviceCount: 0,
-                        icon: 'fa-briefcase'
-                    }
-                ];
-
-                // Sample Device Groups
-                const sampleGroups = [
-                    {
-                        id: 'group-1',
-                        name: 'All Lights',
-                        deviceIds: ['light-1', 'light-2', 'light-3'],
-                        icon: 'fa-lightbulb',
-                        color: '#F2FF66' // Primary color
-                    },
-                    {
-                        id: 'group-2',
-                        name: 'Climate Control',
-                        deviceIds: ['thermostat-1', 'fan-1'],
-                        icon: 'fa-temperature-high',
-                        color: '#406354' // Dark green color
-                    },
-                    {
-                        id: 'group-3',
-                        name: 'Security',
-                        deviceIds: ['door-1'],
-                        icon: 'fa-shield-alt',
-                        color: '#C0B395' // Secondary color
-                    }
-                ];
-
-                setDevices(sampleDevices);
-                setSchedules(sampleSchedules);
-                setRooms(sampleRooms);
-                setDeviceGroups(sampleGroups);
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching automation data:', err);

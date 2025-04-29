@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Loading spinner component
@@ -11,8 +11,9 @@ const LoadingSpinner = () => (
     </div>
 );
 
-const ProtectedRoute = () => {
-    const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ requiredRole }) => {
+    const { isAuthenticated, loading, userRole } = useAuth();
+    const location = useLocation();
 
     // Show loading spinner while checking authentication
     if (loading) {
@@ -24,7 +25,20 @@ const ProtectedRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    // If authenticated, render the child routes
+    // Check if the user has the required role
+    if (requiredRole && userRole !== requiredRole) {
+        // Redirect admin to admin dashboard if trying to access homeowner routes
+        if (userRole === 'admin' && requiredRole === 'homeowner') {
+            return <Navigate to="/admin/dashboard" replace />;
+        }
+
+        // Redirect homeowner to homeowner dashboard if trying to access admin routes
+        if (userRole === 'homeowner' && requiredRole === 'admin') {
+            return <Navigate to="/dashboard" replace />;
+        }
+    }
+
+    // If authenticated with correct role, render the child routes
     return <Outlet />;
 };
 

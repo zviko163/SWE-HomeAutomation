@@ -1,0 +1,209 @@
+/* frontend/src/assets/css/admin/admin-login.css
+*/
+
+/* Super Admin Login Page Styles */
+:root {
+    --admin-primary: #F2FF66;
+    --admin-dark: #33171E;
+    --admin-accent: #FF6666;
+    /* Different accent color for admin */
+    --admin-light: #ECEAE5;
+    --admin-gray: #6c757d;
+    --admin-glass-bg: rgba(255, 255, 255, 0.15);
+    --admin-glass-border: rgba(255, 255, 255, 0.2);
+}
+
+.admin-login-container {
+    min-height: 100vh;
+    background-color: var(--admin-dark);
+    background-image: linear-gradient(135deg, rgba(64, 99, 84, 0.9) 0%, rgba(51, 23, 30, 0.9) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.admin-login-wrapper {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    min-height: 80vh;
+}
+
+.admin-login-header {
+    padding: 1.5rem 0;
+    text-align: center;
+}
+
+.admin-logo {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.brand {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: var(--admin-primary);
+}
+
+.admin-badge {
+    background-color: var(--admin-accent);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    margin-left: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+}
+
+.admin-login-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-card {
+    width: 100%;
+    background: var(--admin-glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--admin-glass-border);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    overflow: hidden;
+}
+
+.admin-card-header {
+    background-color: rgba(51, 23, 30, 0.7);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+    border-bottom: 3px solid var(--admin-primary);
+}
+
+.admin-card-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admin-card-header p {
+    opacity: 0.8;
+    margin: 0;
+}
+
+.admin-card-body {
+    padding: 2rem;
+}
+
+.admin-login-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-login-form .form-label {
+    font-weight: 500;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.admin-login-form .form-control {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--admin-glass-border);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+}
+
+.admin-login-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(242, 255, 102, 0.25);
+    border-color: var(--admin-primary);
+}
+
+.admin-login-form .form-check-label {
+    color: white;
+}
+
+.toggle-password {
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--admin-glass-border);
+    border-left: none;
+}
+
+.toggle-password:hover {
+    background-color: rgba(242, 255, 102, 0.1);
+}
+
+.admin-login-form .btn-primary {
+    background-color: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: var(--admin-dark);
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.3s ease;
+}
+
+.admin-login-form .btn-primary:hover {
+    background-color: #e6ff33;
+    /* Slightly darker yellow */
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-login-form .btn-primary:disabled {
+    background-color: var(--admin-primary);
+    border-color: var(--admin-primary);
+    opacity: 0.7;
+}
+
+.admin-card-footer {
+    padding: 1.5rem 2rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: white;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.admin-card-footer a {
+    color: var(--admin-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.admin-card-footer a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.admin-login-footer {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 1.5rem 0;
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .admin-login-container {
+        padding: 1rem;
+    }
+
+    .admin-card-header {
+        padding: 1.5rem;
+    }
+
+    .admin-card-body {
+        padding: 1.5rem;
+    }
+
+    .brand {
+        font-size: 1.5rem;
+    }
+}

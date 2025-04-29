@@ -38,6 +38,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import InsightsPage from './components/dashboard/InsightsPage';
 import AutomationPage from './components/dashboard/AutomationPage';
 import ProfilePage from './components/dashboard/ProfilePage';
+import AdminDashboard from './components/admin/AdminDashboard';
+import UserManagement from './components/admin/UserManagement';
+import GlobalDeviceMonitor from './components/admin/GlobalDeviceMonitor';
 
 // Import auth context
 import { AuthProvider } from './context/AuthContext';
@@ -76,12 +79,19 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
+          {/* Homeowner protected routes */}
+          <Route element={<ProtectedRoute requiredRole="homeowner" />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/automation" element={<AutomationPage />} />
-            <Route path="/profile" element={<ProfilePage />} /> 
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
+
+          {/* Admin protected routes */}
+          <Route element={<ProtectedRoute requiredRole="admin" />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/devices" element={<GlobalDeviceMonitor />} />
           </Route>
 
           {/* Catch all route - redirect to home */}

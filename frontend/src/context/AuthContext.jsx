@@ -9,11 +9,31 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
         // Set up a listener for authentication state changes
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
+
+            // Determine user role
+            if (user) {
+                // In a production environment, you would typically:
+                // 1. Query Firestore for a user's role
+                // 2. Use Firebase Custom Claims
+                // 3. Or have a role-based database structure
+
+                // For this demo, we'll use a simple email check
+                // Super Admin emails contain 'admin'
+                if (user.email && user.email.includes('admin')) {
+                    setUserRole('admin');
+                } else {
+                    setUserRole('homeowner');
+                }
+            } else {
+                setUserRole(null);
+            }
+
             setLoading(false);
         });
 
@@ -25,7 +45,10 @@ export function AuthProvider({ children }) {
     const value = {
         currentUser,
         isAuthenticated: !!currentUser,
-        loading
+        loading,
+        userRole,
+        isAdmin: userRole === 'admin',
+        isHomeowner: userRole === 'homeowner'
     };
 
     return (

@@ -28,6 +28,9 @@ import './assets/css/automation.css';
 import './assets/css/profile.css';
 // css for the notifiactions components
 import './assets/css/notifications.css';
+// css for the notifiactions components
+import './assets/css/admin/admin.css';
+import './assets/css/admin/user-management.css';
 
 // Import components
 import LandingPage from './components/LandingPage';
@@ -41,6 +44,7 @@ import ProfilePage from './components/dashboard/ProfilePage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import UserManagement from './components/admin/UserManagement';
 import GlobalDeviceMonitor from './components/admin/GlobalDeviceMonitor';
+import AdminProfilePage from './components/admin/AdminProfilePage';
 
 // Import auth context
 import { AuthProvider } from './context/AuthContext';
@@ -92,6 +96,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/devices" element={<GlobalDeviceMonitor />} />
+            <Route path="/admin/profile" element={<AdminProfilePage />} />
           </Route>
 
           {/* Catch all route - redirect to home */}

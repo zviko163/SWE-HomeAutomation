@@ -66,3 +66,17 @@
         font-size: 0.9375rem;
     }
 }
+
+/* Add to frontend/src/assets/css/room-filter.css */
+.room-filter-loading,
+.room-filter-error {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.room-filter-error {
+    color: var(--danger);
+}

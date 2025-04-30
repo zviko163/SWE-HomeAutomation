@@ -14,22 +14,17 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
         const fetchRooms = async () => {
             try {
                 setLoading(true);
+                setError(null);
 
                 // Try to fetch rooms from API
                 try {
-                    // const roomsData = await roomService.getRooms();
-                    // setRooms(roomsData);
-                    // setLoading(false);
-                    console.log('Attempting to fetch rooms from API...');
-                    const response = await roomService.getRooms();
-                    console.log('Rooms API response:', response);
-
-                    if (response && Array.isArray(response)) {
-                        setRooms(response);
-                    } else if (response && Array.isArray(response.data)) {
+                    const roomsData = await roomService.getRooms();
+                    
+                    // Check if the response has the expected structure
+                    if (response && response.data) {
                         setRooms(response.data);
                     } else {
-                        // Fallback if response format is unexpected
+                        console.warn('Unexpected API response format:', response);
                         throw new Error('Unexpected API response format');
                     }
                 } catch (err) {
@@ -42,6 +37,7 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
                         { id: 'bathroom', name: 'Bathroom' },
                         { id: 'office', name: 'Office' }
                     ]);
+                } finally {
                     setLoading(false);
                 }
             } catch (error) {
@@ -56,27 +52,37 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
 
     return (
         <div className="room-filter">
-            <div className="room-filter-scroll">
-                {/* Always show "All Rooms" option first */}
-                <button
-                    key={allRoomsOption.id}
-                    className={`room-filter-btn ${selectedRoom === allRoomsOption.name ? 'active' : ''}`}
-                    onClick={() => onRoomChange(allRoomsOption.name)}
-                >
-                    {allRoomsOption.name}
-                </button>
-
-                {/* Then show the rooms from the API/fallback */}
-                {rooms.map(room => (
+            {loading ? (
+                <div className="room-filter-loading">
+                    <span>Loading rooms...</span>
+                </div>
+            ) : error ? (
+                <div className="room-filter-error">
+                    <span>{error}</span>
+                </div>
+            ) : (
+                <div className="room-filter-scroll">
+                    {/* Always show "All Rooms" option first */}
                     <button
-                        key={room.id || room.name}  // Use a unique identifier
-                        className={`room-filter-btn ${selectedRoom === room.name ? 'active' : ''}`}
-                        onClick={() => onRoomChange(room.name)}
+                        key={allRoomsOption.id}
+                        className={`room-filter-btn ${selectedRoom === allRoomsOption.name ? 'active' : ''}`}
+                        onClick={() => onRoomChange(allRoomsOption.name)}
                     >
-                        {room.name}
+                        {allRoomsOption.name}
                     </button>
-                ))}
-            </div>
+
+                    {/* Then show the rooms from the API/fallback */}
+                    {rooms.map(room => (
+                        <button
+                            key={room._id || room.id || room.name}  // Handle various ID formats
+                            className={`room-filter-btn ${selectedRoom === room.name ? 'active' : ''}`}
+                            onClick={() => onRoomChange(room.name)}
+                        >
+                            {room.name}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

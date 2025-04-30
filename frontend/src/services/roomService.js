@@ -12,9 +12,10 @@ class RoomService {
     async getRooms() {
         try {
             const response = await apiService.get('rooms');
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching rooms:', error);
+            // Rethrow to allow component to handle fallback
             throw error;
         }
     }

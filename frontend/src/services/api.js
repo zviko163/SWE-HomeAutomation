@@ -12,7 +12,9 @@ class ApiService {
      * @returns {Promise<any>} - Response data
      */
     async get(endpoint, params = {}) {
-        const url = new URL(`${API_URL}/${endpoint}`.replace("//", "/"));
+        // Ensure endpoint doesn't have double slashes
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        const url = new URL(`${API_URL}/${cleanEndpoint}`);
 
         // Add query parameters
         Object.keys(params).forEach(key => {
@@ -22,6 +24,7 @@ class ApiService {
         });
 
         try {
+            console.log(`Fetching from: ${url.toString()}`);
             const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: {
@@ -30,7 +33,6 @@ class ApiService {
             });
 
             if (!response.ok) {
-                console.error(`API error for ${endpoint}: ${response.status} ${response.statusText}`);
                 throw new Error(`API error: ${response.status} ${response.statusText}`);
             }
 
@@ -39,7 +41,7 @@ class ApiService {
             console.error(`Error fetching from ${endpoint}:`, error);
             // Provide more context in the error
             if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                throw new Error(`Network error: Could not connect to the server at ${API_URL}. Is the backend running?`);
+                throw new Error(`Network error: Could not connect to the API at ${API_URL}. Is the backend running?`);
             }
             throw error;
         }

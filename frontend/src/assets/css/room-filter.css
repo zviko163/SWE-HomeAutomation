@@ -80,3 +80,194 @@
 .room-filter-error {
     color: var(--danger);
 }
+
+/* Add to frontend/src/assets/css/room-filter.css */
+
+.room-filter-container {
+    position: relative;
+}
+
+.add-room-btn {
+    background-color: var(--light-bg);
+    border: 1px dashed var(--glass-border);
+    color: var(--gray-600);
+}
+
+.add-room-btn:hover {
+    background-color: var(--glass-bg);
+    color: var(--dark-sienna);
+}
+
+.room-edit-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    padding: 0;
+    margin-left: 5px;
+    font-size: 0.75rem;
+}
+
+.room-filter-btn:hover .room-edit-btn {
+    display: inline-block;
+}
+
+.room-edit-btn:hover {
+    color: var(--dark-sienna);
+}
+
+/* Room Modal Styles */
+.room-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(51, 23, 30, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.room-modal {
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    padding: 0;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.room-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.room-form {
+    padding: 1.25rem;
+}
+
+.room-icon-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+.room-icon-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.room-icon-option i {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-600);
+}
+
+.room-icon-option span {
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--dark-sienna);
+}
+
+.room-icon-option:hover {
+    background-color: rgba(242, 255, 102, 0.1);
+    transform: translateY(-2px);
+}
+
+.room-icon-option.selected {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.room-icon-option.selected i {
+    color: var(--dark-sienna);
+}
+
+.btn-delete {
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--danger);
+    border: none;
+    border-radius: 25px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-delete:hover {
+    background-color: rgba(244, 67, 54, 0.2);
+}
+
+.success-message {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--success);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Updated room filter button styles */
+.room-filter-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.room-filter-btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.room-filter-btn i.room-icon {
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+    color: var(--gray-600);
+}
+
+.room-edit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+}
+
+.room-filter-btn-wrapper:hover .room-edit-btn {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--dark-sienna);
+}

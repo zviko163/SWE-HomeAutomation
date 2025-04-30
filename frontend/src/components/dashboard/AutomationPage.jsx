@@ -160,12 +160,6 @@ const AutomationPage = () => {
             name: 'Bathroom',
             deviceCount: 0,
             icon: 'fa-bath'
-        },
-        {
-            id: 'office',
-            name: 'Office',
-            deviceCount: 0,
-            icon: 'fa-briefcase'
         }
     ];
 

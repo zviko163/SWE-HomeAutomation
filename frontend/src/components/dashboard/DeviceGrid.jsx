@@ -61,48 +61,74 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     ];
 
     // Hook to fallback and fetch devices
-    useEffect(() => {
+    // useEffect(() => {
 
+    //     const fetchDevices = async () => {
+    //         try {
+    //             setLoading(true);
+
+    //             // Try to fetch from API first
+    //             try {
+    //                 let devicesData;
+    //                 if (selectedRoom !== 'All Rooms') {
+    //                     // If a specific room is selected, fetch devices for that room
+    //                     devicesData = await deviceService.getDevicesByRoom(selectedRoom);
+    //                 } else {
+    //                     // Otherwise fetch all devices
+    //                     devicesData = await deviceService.getDevices();
+    //                 }
+    //                 setLocalDevices(devicesData);
+    //                 setLoading(false);
+    //                 return; // Exit if API call successful
+    //             } catch (err) {
+    //                 console.log('API fetch failed, using fallback data');
+    //             }
+
+    //             // If API fails or devices prop is empty, use the sample data
+    //             if (devices.length > 0) {
+    //                 setLocalDevices(devices);
+    //             } else {
+    //                 // Use sample devices as fallback
+    //                 setLocalDevices(sampleDevices);
+    //                 console.log('Using sample device data');
+    //             }
+
+    //             setLoading(false);
+    //         } catch (error) {
+    //             console.error('Error in device setup:', error);
+    //             setError('Failed to load devices');
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     fetchDevices();
+    // }, [devices, selectedRoom]);
+    useEffect(() => {
         const fetchDevices = async () => {
             try {
                 setLoading(true);
+                let devicesData;
 
-                // Try to fetch from API first
-                try {
-                    let devicesData;
-                    if (selectedRoom !== 'All Rooms') {
-                        // If a specific room is selected, fetch devices for that room
-                        devicesData = await deviceService.getDevicesByRoom(selectedRoom);
-                    } else {
-                        // Otherwise fetch all devices
-                        devicesData = await deviceService.getDevices();
-                    }
-                    setLocalDevices(devicesData);
-                    setLoading(false);
-                    return; // Exit if API call successful
-                } catch (err) {
-                    console.log('API fetch failed, using fallback data');
-                }
-
-                // If API fails or devices prop is empty, use the sample data
-                if (devices.length > 0) {
-                    setLocalDevices(devices);
+                // Fetch devices based on room selection
+                if (selectedRoom !== 'All Rooms') {
+                    devicesData = await deviceService.getDevicesByRoom(selectedRoom);
                 } else {
-                    // Use sample devices as fallback
-                    setLocalDevices(sampleDevices);
-                    console.log('Using sample device data');
+                    devicesData = await deviceService.getDevices();
                 }
 
+                setLocalDevices(devicesData);
                 setLoading(false);
             } catch (error) {
-                console.error('Error in device setup:', error);
-                setError('Failed to load devices');
+                console.error('Error fetching devices:', error);
+                // Fallback to sample devices if API call fails
+                setLocalDevices(sampleDevices);
                 setLoading(false);
+                setError('Failed to load devices');
             }
         };
 
         fetchDevices();
-    }, [devices, selectedRoom]);
+    }, [selectedRoom]);
 
     // Set up socket listeners when socket is available
     useEffect(() => {
@@ -114,7 +140,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
             setLocalDevices(prevDevices =>
                 prevDevices.map(device =>
                     device.id === data.id
-                        ? { ...device, state: data.state }
+                        ? { ...device, state: { ...device.state, ...data.state } }
                         : device
                 )
             );
@@ -169,37 +195,39 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     }, [socket, isConnected, selectedRoom]);
 
     // Toggle device state (this function should now emit an event through the API)
-    const toggleDevice = async (id) => {
+    const toggleDevice = async (deviceId) => {
         try {
-            // Find the device
-            const device = localDevices.find(d => d.id === id);
+            // Find the device using either _id or id
+            const device = localDevices.find(d => d._id === deviceId || d.id === deviceId);
             if (!device) return;
+
+            // Use the correct identifier for the API call
+            const correctId = device._id || device.id;
+
+            // Determine the new state
+            const newState = { on: !device.state.on };
 
             // Optimistically update UI
             setLocalDevices(prevDevices =>
-                prevDevices.map(device =>
-                    device.id === id
-                        ? { ...device, state: { ...device.state, on: !device.state.on } }
-                        : device
+                prevDevices.map(d =>
+                    (d._id === deviceId || d.id === deviceId)
+                        ? { ...d, state: { ...d.state, on: newState.on } }
+                        : d
                 )
             );
 
-            // Make API call to update device state using our service
-            await deviceService.updateDeviceState(id, {
-                on: !device.state.on
-            });
-
-            // Note: We don't need to update state here since the socket event will handle it
+            // Call API to update device state
+            await deviceService.updateDeviceState(correctId, newState);
 
         } catch (error) {
             console.error('Error toggling device:', error);
 
-            // Revert the optimistic update if there was an error
+            // Revert optimistic update
             setLocalDevices(prevDevices =>
-                prevDevices.map(device =>
-                    device.id === id
-                        ? { ...device, state: { ...device.state, on: device.state.on } }
-                        : device
+                prevDevices.map(d =>
+                    (d._id === deviceId || d.id === deviceId)
+                        ? { ...d, state: { ...d.state, on: !newState.on } }
+                        : d
                 )
             );
         }
@@ -245,7 +273,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         <div className="device-grid">
             {filteredDevices.map(device => (
                 <div
-                    key={device._id || device.id || `device-${index}-${Date.now()}`}  // Ensure unique key
+                    key={device._id || device.id || `device-${Math.random()}`}
                     className={`device-card ${device.state.on ? 'device-on' : 'device-off'}`}
                 >
                     <div className="device-header">
@@ -255,8 +283,8 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
                         <label className="switch">
                             <input
                                 type="checkbox"
-                                checked={device.state.on}
-                                onChange={() => toggleDevice(device.id)}
+                                checked={device.state.on || false}
+                                onChange={() => toggleDevice(device._id || device.id)}
                             />
                             <span className="slider"></span>
                         </label>

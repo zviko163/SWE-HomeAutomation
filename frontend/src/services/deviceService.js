@@ -90,7 +90,9 @@ class DeviceService {
      */
     async updateDeviceState(id, stateData) {
         try {
-            return await apiService.put(`devices/${id}/state`, stateData);
+            // Ensure we're using the correct endpoint
+            const cleanId = id.toString(); // Convert to string to handle both Mongo _id and potential string ids
+            return await apiService.put(`devices/${cleanId}/state`, stateData);
         } catch (error) {
             console.error(`Error updating device ${id} state:`, error);
             throw error;

@@ -134,7 +134,10 @@ const updateDevice = asyncHandler(async (req, res) => {
  * @access  Public
  */
 const updateDeviceState = asyncHandler(async (req, res) => {
-    const device = await Device.findById(req.params.id);
+    const deviceId = req.params.id;
+
+    // Use findById to handle both string and ObjectId
+    const device = await Device.findById(deviceId);
 
     if (!device) {
         res.status(404);
@@ -148,20 +151,12 @@ const updateDeviceState = asyncHandler(async (req, res) => {
     const updatedDevice = await device.save();
 
     // Emit socket event for device state change
-    req.io.emit(socketEvents.DEVICE_STATE_CHANGED, { // Add this block
+    req.io.emit(socketEvents.DEVICE_STATE_CHANGED, {
         id: updatedDevice._id,
         state: updatedDevice.state,
         room: updatedDevice.room
     });
 
-    // Also emit to the specific room
-    req.io.to(updatedDevice.room.replace(/\s+/g, '-').toLowerCase())
-        .emit(socketEvents.DEVICE_STATE_CHANGED, {
-            id: updatedDevice._id,
-            state: updatedDevice.state,
-            room: updatedDevice.room
-        });
-    
     res.json(updatedDevice);
 });
 

@@ -32,15 +32,6 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
             icon: 'fa-temperature-high'
         },
         {
-            id: 'speaker-1',
-            name: 'Smart Speaker',
-            type: 'speaker',
-            room: 'Living Room',
-            status: 'online',
-            state: { on: false, volume: 0 },
-            icon: 'fa-volume-up'
-        },
-        {
             id: 'light-2',
             name: 'Bedside Lamp',
             type: 'light',
@@ -48,15 +39,6 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
             status: 'online',
             state: { on: false, brightness: 0 },
             icon: 'fa-lightbulb'
-        },
-        {
-            id: 'fan-1',
-            name: 'Ceiling Fan',
-            type: 'fan',
-            room: 'Bedroom',
-            status: 'online',
-            state: { on: false, speed: 0 },
-            icon: 'fa-fan'
         },
         {
             id: 'door-1',
@@ -75,15 +57,6 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
             status: 'online',
             state: { on: false, brightness: 0 },
             icon: 'fa-lightbulb'
-        },
-        {
-            id: 'camera-1',
-            name: 'Security Camera',
-            type: 'camera',
-            room: 'Office',
-            status: 'online',
-            state: { on: true, recording: false },
-            icon: 'fa-video'
         }
     ];
 
@@ -272,7 +245,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         <div className="device-grid">
             {filteredDevices.map(device => (
                 <div
-                    key={device.id || `${device.name}-${device.room}`}  // Ensure unique key
+                    key={device._id || device.id || `device-${index}-${Date.now()}`}  // Ensure unique key
                     className={`device-card ${device.state.on ? 'device-on' : 'device-off'}`}
                 >
                     <div className="device-header">

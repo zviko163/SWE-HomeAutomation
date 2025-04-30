@@ -59,6 +59,10 @@ class DeviceService {
             return await apiService.post('devices', deviceData);
         } catch (error) {
             console.error('Error creating device:', error);
+            // Add better error handling
+            if (error.message.includes('Network error')) {
+                throw new Error('Unable to connect to server. Please check your connection and try again.');
+            }
             throw error;
         }
     }

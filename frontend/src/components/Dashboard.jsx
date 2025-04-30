@@ -139,8 +139,13 @@ const Dashboard = () => {
 
     // Handle adding a new device
     const handleAddDevice = (newDevice) => {
-        // In a real app, you would send this to your backend
-        // For now, we'll just add it to our local state
+        // Make sure the device has a unique ID before adding it to the state
+        if (!newDevice._id && !newDevice.id) {
+            // If the API didn't return an ID, generate a temporary one
+            newDevice.id = `temp-device-${Date.now()}`;
+        }
+
+        // Then add it to the state
         setDevices(prevDevices => [...prevDevices, newDevice]);
     };
 

@@ -1,3 +1,4 @@
+// frontend/src/context/SocketContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
@@ -14,17 +15,17 @@ export const SocketProvider = ({ children }) => {
     useEffect(() => {
         // Only connect to socket if user is authenticated
         if (isAuthenticated) {
-            // Create socket connection
-            const socketInstance = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
-                transports: ['websocket'],
+            const socketInstance = io(import.meta.env.VITE_API_URL.replace('/api', ''), { // Remove /api from the base URL
+                path: '/socket.io', // Exactly match the backend path
+                transports: ['polling', 'websocket'],
                 reconnection: true,
-                reconnectionAttempts: 5,
+                reconnectionAttempts: 3,
                 reconnectionDelay: 1000,
             });
 
-            // Set up event listeners
             socketInstance.on('connect', () => {
-                console.log('Socket connected');
+                console.log('Socket connected successfully');
+                console.log('Socket ID:', socketInstance.id);
                 setIsConnected(true);
             });
 
@@ -34,7 +35,9 @@ export const SocketProvider = ({ children }) => {
             });
 
             socketInstance.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
+                console.error('Detailed Socket Connection Error:', error);
+                console.log('Connection URL:', import.meta.env.VITE_API_URL);
+                console.log('Socket Path:', socketInstance.io.opts.path);
                 setIsConnected(false);
             });
 

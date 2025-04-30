@@ -1,9 +1,8 @@
 // frontend/src/components/dashboard/RoomFilter.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Add useState and useEffect imports
 import roomService from '../../services/roomService';
 
 const RoomFilter = ({ selectedRoom, onRoomChange }) => {
-
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,9 +17,21 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
 
                 // Try to fetch rooms from API
                 try {
-                    const roomsData = await roomService.getRooms();
-                    setRooms(roomsData);
-                    setLoading(false);
+                    // const roomsData = await roomService.getRooms();
+                    // setRooms(roomsData);
+                    // setLoading(false);
+                    console.log('Attempting to fetch rooms from API...');
+                    const response = await roomService.getRooms();
+                    console.log('Rooms API response:', response);
+
+                    if (response && Array.isArray(response)) {
+                        setRooms(response);
+                    } else if (response && Array.isArray(response.data)) {
+                        setRooms(response.data);
+                    } else {
+                        // Fallback if response format is unexpected
+                        throw new Error('Unexpected API response format');
+                    }
                 } catch (err) {
                     console.log('API fetch failed, using fallback room data');
                     // Fall back to the hardcoded rooms if API fails
@@ -58,7 +69,7 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
                 {/* Then show the rooms from the API/fallback */}
                 {rooms.map(room => (
                     <button
-                        key={room.id}
+                        key={room.id || room.name}  // Use a unique identifier
                         className={`room-filter-btn ${selectedRoom === room.name ? 'active' : ''}`}
                         onClick={() => onRoomChange(room.name)}
                     >

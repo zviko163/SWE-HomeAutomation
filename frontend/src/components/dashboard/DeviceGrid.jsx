@@ -272,7 +272,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         <div className="device-grid">
             {filteredDevices.map(device => (
                 <div
-                    key={device.id}
+                    key={device.id || `${device.name}-${device.room}`}  // Ensure unique key
                     className={`device-card ${device.state.on ? 'device-on' : 'device-off'}`}
                 >
                     <div className="device-header">

@@ -12,7 +12,7 @@ class ApiService {
      * @returns {Promise<any>} - Response data
      */
     async get(endpoint, params = {}) {
-        const url = new URL(`${API_URL}/${endpoint}`);
+        const url = new URL(`${API_URL}/${endpoint}`.replace("//", "/"));
 
         // Add query parameters
         Object.keys(params).forEach(key => {
@@ -30,12 +30,17 @@ class ApiService {
             });
 
             if (!response.ok) {
+                console.error(`API error for ${endpoint}: ${response.status} ${response.statusText}`);
                 throw new Error(`API error: ${response.status} ${response.statusText}`);
             }
 
             return await response.json();
         } catch (error) {
             console.error(`Error fetching from ${endpoint}:`, error);
+            // Provide more context in the error
+            if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                throw new Error(`Network error: Could not connect to the server at ${API_URL}. Is the backend running?`);
+            }
             throw error;
         }
     }

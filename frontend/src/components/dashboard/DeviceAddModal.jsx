@@ -1,5 +1,6 @@
 // frontend/src/components/dashboard/DeviceAddModal.jsx
 import React, { useState, useEffect } from 'react';
+import deviceService from '../../services/deviceService';
 
 const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
     // Initial form state
@@ -96,11 +97,11 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
                 icon: deviceTypes.find(type => type.id === formData.type)?.icon || 'fa-plug',
             };
 
-            // Simulate API call delay (remove in production)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Instead of simulating a delay, make a real API call using deviceService
+            const newDevice = await deviceService.createDevice(deviceData);
 
-            // Call the onAddDevice function passed from parent
-            onAddDevice(deviceData);
+            // Call the onAddDevice function with the response from the server
+            onAddDevice(newDevice);
 
             // Reset form and close modal
             setFormData(initialFormState);

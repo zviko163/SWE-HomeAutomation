@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import { socketEvents } from '../../utils/socketEvents';
 import DeviceAddModal from './DeviceAddModal';
+import scheduleService from '../../services/scheduleService';
 
 const AutomationPage = () => {
     const navigate = useNavigate();
@@ -268,22 +269,30 @@ const AutomationPage = () => {
 
     // Fetch sample data
     useEffect(() => {
+        // Fetch data
         const fetchData = async () => {
             try {
                 setLoading(true);
 
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Only use sample data if nothing has been loaded
-                if (!hasLoadedRef.current) {
-                    if (devices.length === 0) setDevices(sampleDevices);
-                    if (schedules.length === 0) setSchedules(sampleSchedules);
-                    if (rooms.length === 0) setRooms(sampleRooms);
-                    if (deviceGroups.length === 0) setDeviceGroups(sampleGroups);
-                    hasLoadedRef.current = true;
+                // Try to fetch schedules from API
+                try {
+                    const schedulesData = await scheduleService.getSchedules();
+                    setSchedules(schedulesData);
+                } catch (err) {
+                    console.log('Schedule API fetch failed, using sample data');
+                    // Only use sample data if nothing has been loaded
+                    if (schedules.length === 0) {
+                        setSchedules(sampleSchedules);
+                    }
                 }
 
+                // For now, still use sample data for other entities
+                // Eventually you'll replace these with API calls too
+                if (devices.length === 0) setDevices(sampleDevices);
+                if (rooms.length === 0) setRooms(sampleRooms);
+                if (deviceGroups.length === 0) setDeviceGroups(sampleGroups);
+
+                hasLoadedRef.current = true;
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching automation data:', err);
@@ -301,14 +310,33 @@ const AutomationPage = () => {
     };
 
     // Toggle schedule active state
-    const toggleScheduleActive = (scheduleId) => {
-        setSchedules(prevSchedules =>
-            prevSchedules.map(schedule =>
-                schedule.id === scheduleId
-                    ? { ...schedule, active: !schedule.active }
-                    : schedule
-            )
-        );
+    const toggleScheduleActive = async (scheduleId) => {
+        try {
+            // Optimistically update UI
+            setSchedules(prevSchedules =>
+                prevSchedules.map(schedule =>
+                    schedule.id === scheduleId
+                        ? { ...schedule, active: !schedule.active }
+                        : schedule
+                )
+            );
+
+            // Call API to toggle schedule
+            await scheduleService.toggleSchedule(scheduleId);
+
+            // Note: Socket.io will handle the official state update
+        } catch (error) {
+            console.error('Error toggling schedule:', error);
+
+            // Revert the optimistic update on error
+            setSchedules(prevSchedules =>
+                prevSchedules.map(schedule =>
+                    schedule.id === scheduleId
+                        ? { ...schedule, active: !schedule.active }
+                        : schedule
+                )
+            );
+        }
     };
 
     // Handle schedule selection
@@ -352,6 +380,41 @@ const AutomationPage = () => {
         const group = deviceGroups.find(g => g.id === groupId);
         if (!group) return [];
         return devices.filter(device => group.deviceIds.includes(device.id));
+    };
+
+    // Create a new schedule
+    const createSchedule = async (scheduleData) => {
+        try {
+            const newSchedule = await scheduleService.createSchedule(scheduleData);
+            // You could update state here, but socket.io should handle it
+            return newSchedule;
+        } catch (error) {
+            console.error('Error creating schedule:', error);
+            throw error;
+        }
+    };
+
+    // Update an existing schedule
+    const updateSchedule = async (id, scheduleData) => {
+        try {
+            const updatedSchedule = await scheduleService.updateSchedule(id, scheduleData);
+            // You could update state here, but socket.io should handle it
+            return updatedSchedule;
+        } catch (error) {
+            console.error('Error updating schedule:', error);
+            throw error;
+        }
+    };
+
+    // Delete a schedule
+    const deleteSchedule = async (id) => {
+        try {
+            await scheduleService.deleteSchedule(id);
+            // You could update state here, but socket.io should handle it
+        } catch (error) {
+            console.error('Error deleting schedule:', error);
+            throw error;
+        }
     };
 
     // Render tab buttons
@@ -407,7 +470,25 @@ const AutomationPage = () => {
             <div className="schedules-container">
                 <div className="section-header">
                     <h2>Your Schedules</h2>
-                    <button className="add-btn">
+                    <button
+                        className="add-btn"
+                        onClick={() => {
+                            // Set up a new schedule template
+                            const newScheduleTemplate = {
+                                name: 'New Schedule',
+                                timeOn: '08:00',
+                                timeOff: '20:00',
+                                days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+                                deviceIds: [],
+                                active: true
+                            };
+
+                            // Either directly create it, or set it as the editing schedule
+                            setSelectedSchedule(newScheduleTemplate);
+                            setEditMode(true);
+                            // Alternatively, you could open a modal for creating schedules
+                        }}
+                    >
                         <i className="fas fa-plus"></i>
                         <span>Add Schedule</span>
                     </button>
@@ -488,7 +569,25 @@ const AutomationPage = () => {
                                 >
                                     <i className="fas fa-edit"></i>
                                 </button>
-                                <button className="delete-btn">
+                                <button
+                                    className="delete-btn"
+                                    onClick={async () => {
+                                        if (window.confirm('Are you sure you want to delete this schedule?')) {
+                                            try {
+                                                setIsSubmitting(true); // Add this state if you don't have it
+                                                await deleteSchedule(selectedSchedule.id);
+                                                setSelectedSchedule(null);
+                                                setEditMode(false);
+                                                // Consider adding a success notification here
+                                            } catch (error) {
+                                                // Handle error, perhaps with a toast notification
+                                                console.error('Failed to delete schedule:', error);
+                                            } finally {
+                                                setIsSubmitting(false);
+                                            }
+                                        }
+                                    }}
+                                >
                                     <i className="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -564,8 +663,52 @@ const AutomationPage = () => {
 
                             {editMode && (
                                 <div className="detail-actions-bottom">
-                                    <button className="btn-cancel">Cancel</button>
-                                    <button className="btn-save">Save Changes</button>
+                                    <button
+                                        className="btn-cancel"
+                                        onClick={() => {
+                                            setEditMode(false);
+                                            // Reset any temporary changes
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="btn-save"
+                                        onClick={async () => {
+                                            try {
+                                                setIsSubmitting(true);
+
+                                                // Get the updated schedule data from your form state
+                                                // This assumes you have state tracking the edited schedule
+                                                const updatedData = {
+                                                    name: editedSchedule.name,
+                                                    timeOn: editedSchedule.timeOn,
+                                                    timeOff: editedSchedule.timeOff,
+                                                    days: editedSchedule.days,
+                                                    devices: editedSchedule.deviceIds,
+                                                    // Include other fields as needed
+                                                };
+
+                                                await updateSchedule(selectedSchedule.id, updatedData);
+                                                setEditMode(false);
+                                                // Success notification if desired
+                                            } catch (error) {
+                                                console.error('Failed to update schedule:', error);
+                                                // Error handling
+                                            } finally {
+                                                setIsSubmitting(false);
+                                            }
+                                        }}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="spinner"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            'Save Changes'
+                                        )}
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -647,7 +790,11 @@ const AutomationPage = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={device.state.on}
+                                                        checked={schedule.active}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleScheduleActive(schedule.id);
+                                                        }}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>

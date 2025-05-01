@@ -69,11 +69,11 @@ const getSensorDataById = asyncHandler(async (req, res) => {
  * @access  Public
  */
 const getLatestSensorData = asyncHandler(async (req, res) => {
-    const sensorData = await SensorData.findOne()
+    const latestData = await SensorData.findOne()
         .sort({ timeRecorded: -1 });
 
-    if (sensorData) {
-        res.json(sensorData);
+    if (latestData) {
+        res.json(latestData);
     } else {
         res.status(404);
         throw new Error('No sensor data found');
@@ -87,66 +87,80 @@ const getLatestSensorData = asyncHandler(async (req, res) => {
  */
 const getAggregatedSensorData = asyncHandler(async (req, res) => {
     const { period } = req.query;
-    let timeGroup;
+    let aggregationPipeline = [];
 
-    // Set up time grouping based on period parameter
     switch (period) {
-        case 'hour':
-            timeGroup = {
-                year: { $year: "$timeRecorded" },
-                month: { $month: "$timeRecorded" },
-                day: { $dayOfMonth: "$timeRecorded" },
-                hour: { $hour: "$timeRecorded" }
-            };
+        case '24h':
+            // Last 24 hours of data
+            aggregationPipeline = [
+                {
+                    $match: {
+                        timeRecorded: {
+                            $gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: {
+                                format: "%Y-%m-%d %H:%M",
+                                date: "$timeRecorded"
+                            }
+                        },
+                        avgTemperature: { $avg: "$temperature" },
+                        avgHumidity: { $avg: "$humidity" }
+                    }
+                },
+                { $sort: { "_id": 1 } }
+            ];
             break;
-        case 'day':
-            timeGroup = {
-                year: { $year: "$timeRecorded" },
-                month: { $month: "$timeRecorded" },
-                day: { $dayOfMonth: "$timeRecorded" }
-            };
+
+        case '7days':
+            // Last 7 days of data
+            aggregationPipeline = [
+                {
+                    $match: {
+                        timeRecorded: {
+                            $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: {
+                                format: "%Y-%m-%d",
+                                date: "$timeRecorded"
+                            }
+                        },
+                        avgTemperature: { $avg: "$temperature" },
+                        avgHumidity: { $avg: "$humidity" }
+                    }
+                },
+                { $sort: { "_id": 1 } }
+            ];
             break;
-        case 'month':
-            timeGroup = {
-                year: { $year: "$timeRecorded" },
-                month: { $month: "$timeRecorded" }
-            };
-            break;
-        default:
-            timeGroup = {
-                year: { $year: "$timeRecorded" },
-                month: { $month: "$timeRecorded" },
-                day: { $dayOfMonth: "$timeRecorded" }
-            };
+
+        default: // historical (all data)
+            aggregationPipeline = [
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: {
+                                format: "%Y-%m",
+                                date: "$timeRecorded"
+                            }
+                        },
+                        avgTemperature: { $avg: "$temperature" },
+                        avgHumidity: { $avg: "$humidity" }
+                    }
+                },
+                { $sort: { "_id": 1 } }
+            ];
     }
 
-    // Set up date range filter
-    const filter = {};
-    if (req.query.startDate && req.query.endDate) {
-        filter.timeRecorded = {
-            $gte: new Date(req.query.startDate),
-            $lte: new Date(req.query.endDate)
-        };
-    }
-
-    // Perform aggregation
-    const aggregatedData = await SensorData.aggregate([
-        { $match: filter },
-        {
-            $group: {
-                _id: timeGroup,
-                avgTemperature: { $avg: "$temperature" },
-                avgHumidity: { $avg: "$humidity" },
-                avgLdrValue: { $avg: "$ldrValue" },
-                count: { $sum: 1 },
-                minTemperature: { $min: "$temperature" },
-                maxTemperature: { $max: "$temperature" },
-                minHumidity: { $min: "$humidity" },
-                maxHumidity: { $max: "$humidity" }
-            }
-        },
-        { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1, "_id.hour": 1 } }
-    ]);
+    const aggregatedData = await SensorData.aggregate(aggregationPipeline);
 
     res.json({
         success: true,

@@ -1,5 +1,7 @@
 // frontend/src/components/dashboard/DeviceAddModal.jsx
 import React, { useState, useEffect } from 'react';
+import deviceService from '../../services/deviceService';
+import roomService from '../../services/roomService';
 
 const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
     // Initial form state
@@ -23,12 +25,10 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
     const deviceTypes = [
         { id: 'light', name: 'Light', icon: 'fa-lightbulb' },
         { id: 'thermostat', name: 'Thermostat', icon: 'fa-temperature-high' },
-        { id: 'fan', name: 'Fan', icon: 'fa-fan' },
-        { id: 'speaker', name: 'Speaker', icon: 'fa-volume-up' },
-        { id: 'door', name: 'Door', icon: 'fa-door-closed' },
-        { id: 'camera', name: 'Camera', icon: 'fa-video' },
         { id: 'motion_sensor', name: 'Motion Sensor', icon: 'fa-walking' },
+        { id: 'door', name: 'Door', icon: 'fa-door-closed' },
         { id: 'window', name: 'Window', icon: 'fa-window-maximize' },
+        { id: 'alarm', name: 'Alarm', icon: 'fa-bell' },        
     ];
 
     // Available rooms
@@ -42,6 +42,11 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
         'Hallway',
         'Garage',
     ];
+
+    // Add state for rooms at the top with other states
+    const [roomOptions, setRoomOptions] = useState(rooms);
+    const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Handle input changes
     const handleInputChange = (e) => {
@@ -90,17 +95,26 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
 
             // Prepare device data
             const deviceData = {
-                ...formData,
-                id: `${formData.type}-${Date.now()}`, // Generate a unique ID
+                name: formData.name,
+                type: formData.type,
+                room: formData.room,
                 state: getDefaultStateForDeviceType(formData.type),
                 icon: deviceTypes.find(type => type.id === formData.type)?.icon || 'fa-plug',
             };
 
-            // Simulate API call delay (remove in production)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Make API call to create device
+            const newDevice = await deviceService.createDevice(deviceData);
 
-            // Call the onAddDevice function passed from parent
-            onAddDevice(deviceData);
+            // Call the onAddDevice function with the response from the server
+            onAddDevice(newDevice);
+
+            // Set success message
+            setSuccessMessage(`Device "${newDevice.name}" successfully added!`);
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 3000);
 
             // Reset form and close modal
             setFormData(initialFormState);
@@ -109,7 +123,7 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
             console.error('Error adding device:', error);
             setErrors({
                 ...errors,
-                submit: 'Failed to add device. Please try again.',
+                submit: error.message || 'Failed to add device. Please try again.'
             });
         } finally {
             setIsSubmitting(false);
@@ -123,22 +137,40 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
                 return { on: false, brightness: 100 };
             case 'thermostat':
                 return { on: false, temperature: 22, mode: 'heat' };
-            case 'fan':
-                return { on: false, speed: 0 };
-            case 'speaker':
-                return { on: false, volume: 50 };
-            case 'door':
-                return { locked: true };
-            case 'camera':
-                return { on: false, recording: false };
             case 'motion_sensor':
                 return { detected: false, sensitivity: 'medium' };
+            case 'door':
+                return { locked: true };
             case 'window':
                 return { open: false };
+            case 'alarm':
+                return { on: false, recording: false };
             default:
                 return { on: false };
         }
     };
+
+    // Add this effect to fetch rooms when the modal opens
+    useEffect(() => {
+        const fetchRooms = async () => {
+            if (!isOpen) return;
+
+            setIsLoadingRooms(true);
+            try {
+                const response = await roomService.getRooms();
+                if (response && response.data && Array.isArray(response.data)) {
+                    setRoomOptions(response.data.map(room => room.name));
+                }
+            } catch (error) {
+                console.error('Failed to load rooms:', error);
+                // Keep the default rooms if API fails
+            } finally {
+                setIsLoadingRooms(false);
+            }
+        };
+
+        fetchRooms();
+    }, [isOpen]);
 
     // Reset form when modal is closed
     useEffect(() => {
@@ -167,7 +199,17 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
 
                 <form onSubmit={handleSubmit} className="device-form">
                     {errors.submit && (
-                        <div className="error-message">{errors.submit}</div>
+                        <div className="error-message">
+                            <i className="fas fa-exclamation-circle"></i>
+                            {errors.submit}
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div className="success-message">
+                            <i className="fas fa-check-circle"></i>
+                            {successMessage}
+                        </div>
                     )}
 
                     <div className="form-group">
@@ -211,11 +253,15 @@ const DeviceAddModal = ({ isOpen, onClose, onAddDevice }) => {
                             name="room"
                             value={formData.room}
                             onChange={handleInputChange}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isLoadingRooms}
                         >
-                            {rooms.map(room => (
-                                <option key={room} value={room}>{room}</option>
-                            ))}
+                            {isLoadingRooms ? (
+                                <option>Loading rooms...</option>
+                            ) : (
+                                roomOptions.map(room => (
+                                    <option key={room} value={room}>{room}</option>
+                                ))
+                            )}
                         </select>
                     </div>
 

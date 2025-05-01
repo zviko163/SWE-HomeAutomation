@@ -1,7 +1,8 @@
-// Updated Dashboard.jsx with DeviceAddModal integration
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext'; 
+import { socketEvents } from '../utils/socketEvents';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -11,6 +12,8 @@ import QuickRoutines from './dashboard/QuickRoutines';
 import DeviceGrid from './dashboard/DeviceGrid';
 import RoomFilter from './dashboard/RoomFilter';
 import DeviceAddModal from './dashboard/DeviceAddModal';
+import ProfilePage from './dashboard/ProfilePage';
+import NotificationsPopup from './dashboard/NotificationsPopup';
 
 const Dashboard = () => {
     const { currentUser } = useAuth();
@@ -24,43 +27,102 @@ const Dashboard = () => {
     // State for controlling modal visibility
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    // Get time-based greeting
+    // State variables for notifications
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+    // Sample fallback notifications
+    const sampleNotifications = [
+        {
+            id: 1,
+            message: "Temperature in Living Room is above normal",
+            time: "5 minutes ago",
+            read: false,
+            icon: "fa-temperature-high"
+        },
+        {
+            id: 2,
+            message: "Front door was opened",
+            time: "20 minutes ago",
+            read: false,
+            icon: "fa-door-open"
+        },
+        {
+            id: 3,
+            message: "Energy usage reduced by 10% this week",
+            time: "1 hour ago",
+            read: true,
+            icon: "fa-bolt"
+        }
+    ];
+
+    const [notifications, setNotifications] = useState([]);
+    const { socket, isConnected } = useSocket();
+
+    // Socket.io notification listener
     useEffect(() => {
-        const getGreeting = () => {
-            const hour = new Date().getHours();
-            if (hour < 12) return 'Good Morning';
-            if (hour < 18) return 'Good Afternoon';
-            return 'Good Evening';
+        if (!socket || !isConnected) return;
+
+        // Handle new notifications
+        const handleNewNotification = (notification) => {
+            setNotifications(prev => [notification, ...prev]);
         };
 
-        setGreeting(getGreeting());
+        // Register event listener
+        socket.on(socketEvents.NOTIFICATION_NEW, handleNewNotification);
 
-        // In a real app, you would fetch devices from your backend here
-        // For now, we'll use some sample data
-        const sampleDevices = [
-            {
-                id: 'light-1',
-                name: 'Ceiling Light',
-                type: 'light',
-                room: 'Living Room',
-                status: 'online',
-                state: { on: true, brightness: 80 },
-                icon: 'fa-lightbulb'
-            },
-            {
-                id: 'thermostat-1',
-                name: 'Smart Thermostat',
-                type: 'thermostat',
-                room: 'Living Room',
-                status: 'online',
-                state: { on: true, temperature: 22, mode: 'heat' },
-                icon: 'fa-temperature-high'
-            },
-            // Add more sample devices as needed
-        ];
+        // Cleanup listener on component unmount
+        return () => {
+            socket.off(socketEvents.NOTIFICATION_NEW, handleNewNotification);
+        };
+    }, [socket, isConnected]);
 
-        setDevices(sampleDevices);
+    // Toggle notifications popup
+    const toggleNotifications = () => {
+        setIsNotificationsOpen(!isNotificationsOpen);
+    };
+
+    // Fallback sample devices
+    const sampleDevices = [
+        {
+            id: 'light-1',
+            name: 'Ceiling Light',
+            type: 'light',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, brightness: 80 },
+            icon: 'fa-lightbulb'
+        },
+        {
+            id: 'thermostat-1',
+            name: 'Smart Thermostat',
+            type: 'thermostat',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, temperature: 22, mode: 'heat' },
+            icon: 'fa-temperature-high'
+        }
+    ];
+
+    useEffect(() => {
+        const hour = new Date().getHours();
+        const greeting =
+            hour < 12 ? 'Good Morning' :
+                hour < 18 ? 'Good Afternoon' : 'Good Evening';
+        setGreeting(greeting);
     }, []);
+
+    // Set sample devices & notifications as fallback on mount
+    useEffect(() => {
+        if (devices.length === 0) {
+            setDevices(sampleDevices);
+        }
+    }, [devices]);
+
+    useEffect(() => {
+        if (notifications.length === 0) {
+            setNotifications(sampleNotifications);
+        }
+    }, [notifications]);
 
     const handleLogout = async () => {
         try {
@@ -77,8 +139,13 @@ const Dashboard = () => {
 
     // Handle adding a new device
     const handleAddDevice = (newDevice) => {
-        // In a real app, you would send this to your backend
-        // For now, we'll just add it to our local state
+        // Make sure the device has a unique ID before adding it to the state
+        if (!newDevice._id && !newDevice.id) {
+            // If the API didn't return an ID, generate a temporary one
+            newDevice.id = `temp-device-${Date.now()}`;
+        }
+
+        // Then add it to the state
         setDevices(prevDevices => [...prevDevices, newDevice]);
     };
 
@@ -91,19 +158,27 @@ const Dashboard = () => {
             {/* Header Section */}
             <header className="dashboard-header">
                 <div className="user-greeting">
+                    
                     <h1>{greeting}, {userName}</h1>
                     <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
                 <div className="header-actions">
-                    <button className="icon-button notification-btn">
+                    <button className="icon-button notification-btn" onClick={toggleNotifications}>
                         <i className="fas fa-bell"></i>
+                        {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
                     </button>
-                    <button className="icon-button settings-btn">
+                    <button className="icon-button settings-btn" onClick={() => navigate('/profile')}>
                         <i className="fas fa-cog"></i>
                     </button>
                     <button className="icon-button profile-btn" onClick={handleLogout}>
                         <i className="fas fa-sign-out-alt"></i>
                     </button>
+
+                    <NotificationsPopup
+                        isOpen={isNotificationsOpen}
+                        onClose={() => setIsNotificationsOpen(false)}
+                        notifications={notifications}
+                    />
                 </div>
             </header>
 
@@ -153,7 +228,7 @@ const Dashboard = () => {
                     <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/profile')}>
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
                 </button>

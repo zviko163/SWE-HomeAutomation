@@ -1,124 +1,236 @@
-// Updated DeviceGrid.jsx to accept devices from props
-
 import React, { useState, useEffect } from 'react';
+import { useSocket } from '../../context/SocketContext'; // Add this import
+import { socketEvents } from '../../utils/socketEvents';
+import deviceService from '../../services/deviceService';
 
 const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [localDevices, setLocalDevices] = useState([]);
 
-    useEffect(() => {
-        // If devices are provided via props, use them
-        if (devices.length > 0) {
-            setLocalDevices(devices);
-            setLoading(false);
-        } else {
-            // Otherwise, fetch sample data (for backward compatibility)
-            const fetchDevices = async () => {
-                try {
-                    setLoading(true);
+    // Get socket from context
+    const { socket, isConnected } = useSocket();
 
-                    // Simulate API loading time
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-
-                    // Sample device data
-                    const sampleDevices = [
-                        {
-                            id: 'light-1',
-                            name: 'Ceiling Light',
-                            type: 'light',
-                            room: 'Living Room',
-                            status: 'online',
-                            state: { on: true, brightness: 80 },
-                            icon: 'fa-lightbulb'
-                        },
-                        {
-                            id: 'thermostat-1',
-                            name: 'Smart Thermostat',
-                            type: 'thermostat',
-                            room: 'Living Room',
-                            status: 'online',
-                            state: { on: true, temperature: 22, mode: 'heat' },
-                            icon: 'fa-temperature-high'
-                        },
-                        {
-                            id: 'speaker-1',
-                            name: 'Smart Speaker',
-                            type: 'speaker',
-                            room: 'Living Room',
-                            status: 'online',
-                            state: { on: false, volume: 0 },
-                            icon: 'fa-volume-up'
-                        },
-                        {
-                            id: 'light-2',
-                            name: 'Bedside Lamp',
-                            type: 'light',
-                            room: 'Bedroom',
-                            status: 'online',
-                            state: { on: false, brightness: 0 },
-                            icon: 'fa-lightbulb'
-                        },
-                        {
-                            id: 'fan-1',
-                            name: 'Ceiling Fan',
-                            type: 'fan',
-                            room: 'Bedroom',
-                            status: 'online',
-                            state: { on: false, speed: 0 },
-                            icon: 'fa-fan'
-                        },
-                        {
-                            id: 'door-1',
-                            name: 'Front Door',
-                            type: 'door',
-                            room: 'Kitchen',
-                            status: 'online',
-                            state: { locked: true },
-                            icon: 'fa-door-closed'
-                        },
-                        {
-                            id: 'light-3',
-                            name: 'Kitchen Lights',
-                            type: 'light',
-                            room: 'Kitchen',
-                            status: 'online',
-                            state: { on: false, brightness: 0 },
-                            icon: 'fa-lightbulb'
-                        },
-                        {
-                            id: 'camera-1',
-                            name: 'Security Camera',
-                            type: 'camera',
-                            room: 'Office',
-                            status: 'online',
-                            state: { on: true, recording: false },
-                            icon: 'fa-video'
-                        }
-                    ];
-
-                    setLocalDevices(sampleDevices);
-                    setLoading(false);
-                } catch (error) {
-                    console.error('Error fetching devices:', error);
-                    setError('Failed to load devices');
-                    setLoading(false);
-                }
-            };
-
-            fetchDevices();
+    // Sample device data
+    const sampleDevices = [
+        {
+            id: 'light-1',
+            name: 'Ceiling Light',
+            type: 'light',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, brightness: 80 },
+            icon: 'fa-lightbulb'
+        },
+        {
+            id: 'thermostat-1',
+            name: 'Smart Thermostat',
+            type: 'thermostat',
+            room: 'Living Room',
+            status: 'online',
+            state: { on: true, temperature: 22, mode: 'heat' },
+            icon: 'fa-temperature-high'
+        },
+        {
+            id: 'light-2',
+            name: 'Bedside Lamp',
+            type: 'light',
+            room: 'Bedroom',
+            status: 'online',
+            state: { on: false, brightness: 0 },
+            icon: 'fa-lightbulb'
+        },
+        {
+            id: 'door-1',
+            name: 'Front Door',
+            type: 'door',
+            room: 'Kitchen',
+            status: 'online',
+            state: { locked: true },
+            icon: 'fa-door-closed'
+        },
+        {
+            id: 'light-3',
+            name: 'Kitchen Lights',
+            type: 'light',
+            room: 'Kitchen',
+            status: 'online',
+            state: { on: false, brightness: 0 },
+            icon: 'fa-lightbulb'
         }
-    }, [devices]);
+    ];
 
-    // Toggle device state
-    const toggleDevice = (id) => {
-        setLocalDevices(prevDevices =>
-            prevDevices.map(device =>
-                device.id === id
-                    ? { ...device, state: { ...device.state, on: !device.state.on } }
-                    : device
-            )
-        );
+    // Hook to fallback and fetch devices
+    // useEffect(() => {
+
+    //     const fetchDevices = async () => {
+    //         try {
+    //             setLoading(true);
+
+    //             // Try to fetch from API first
+    //             try {
+    //                 let devicesData;
+    //                 if (selectedRoom !== 'All Rooms') {
+    //                     // If a specific room is selected, fetch devices for that room
+    //                     devicesData = await deviceService.getDevicesByRoom(selectedRoom);
+    //                 } else {
+    //                     // Otherwise fetch all devices
+    //                     devicesData = await deviceService.getDevices();
+    //                 }
+    //                 setLocalDevices(devicesData);
+    //                 setLoading(false);
+    //                 return; // Exit if API call successful
+    //             } catch (err) {
+    //                 console.log('API fetch failed, using fallback data');
+    //             }
+
+    //             // If API fails or devices prop is empty, use the sample data
+    //             if (devices.length > 0) {
+    //                 setLocalDevices(devices);
+    //             } else {
+    //                 // Use sample devices as fallback
+    //                 setLocalDevices(sampleDevices);
+    //                 console.log('Using sample device data');
+    //             }
+
+    //             setLoading(false);
+    //         } catch (error) {
+    //             console.error('Error in device setup:', error);
+    //             setError('Failed to load devices');
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     fetchDevices();
+    // }, [devices, selectedRoom]);
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                setLoading(true);
+                let devicesData;
+
+                // Fetch devices based on room selection
+                if (selectedRoom !== 'All Rooms') {
+                    devicesData = await deviceService.getDevicesByRoom(selectedRoom);
+                } else {
+                    devicesData = await deviceService.getDevices();
+                }
+
+                setLocalDevices(devicesData);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+                // Fallback to sample devices if API call fails
+                setLocalDevices(sampleDevices);
+                setLoading(false);
+                setError('Failed to load devices');
+            }
+        };
+
+        fetchDevices();
+    }, [selectedRoom]);
+
+    // Set up socket listeners when socket is available
+    useEffect(() => {
+
+        if (!socket || !isConnected) return;
+
+        // Listen for device state changes
+        const handleDeviceStateChange = (data) => {
+            setLocalDevices(prevDevices =>
+                prevDevices.map(device =>
+                    device.id === data.id
+                        ? { ...device, state: { ...device.state, ...data.state } }
+                        : device
+                )
+            );
+        };
+
+        // Listen for new devices
+        const handleDeviceAdded = (device) => {
+            // Add the new device if it belongs to the selected room or if 'All Rooms' is selected
+            if (selectedRoom === 'All Rooms' || device.room === selectedRoom) {
+                setLocalDevices(prevDevices => [...prevDevices, device]);
+            }
+        };
+
+        // Listen for device updates
+        const handleDeviceUpdated = (updatedDevice) => {
+            setLocalDevices(prevDevices =>
+                prevDevices.map(device =>
+                    device.id === updatedDevice.id
+                        ? updatedDevice
+                        : device
+                )
+            );
+        };
+
+        // Listen for device removals
+        const handleDeviceRemoved = (data) => {
+            setLocalDevices(prevDevices =>
+                prevDevices.filter(device => device.id !== data.id)
+            );
+        };
+
+        // Register event listeners
+        socket.on(socketEvents.DEVICE_STATE_CHANGED, handleDeviceStateChange);
+        socket.on(socketEvents.DEVICE_ADDED, handleDeviceAdded);
+        socket.on(socketEvents.DEVICE_UPDATED, handleDeviceUpdated);
+        socket.on(socketEvents.DEVICE_REMOVED, handleDeviceRemoved);
+
+        // Join room-specific channel if a specific room is selected
+        if (selectedRoom !== 'All Rooms') {
+            // Convert room name to lowercase with dashes for channel name
+            const roomChannel = selectedRoom.replace(/\s+/g, '-').toLowerCase();
+            socket.emit('join-room', roomChannel);
+        }
+
+        // Cleanup listeners on component unmount
+        return () => {
+            socket.off(socketEvents.DEVICE_STATE_CHANGED, handleDeviceStateChange);
+            socket.off(socketEvents.DEVICE_ADDED, handleDeviceAdded);
+            socket.off(socketEvents.DEVICE_UPDATED, handleDeviceUpdated);
+            socket.off(socketEvents.DEVICE_REMOVED, handleDeviceRemoved);
+        };
+    }, [socket, isConnected, selectedRoom]);
+
+    // Toggle device state (this function should now emit an event through the API)
+    const toggleDevice = async (deviceId) => {
+        try {
+            // Find the device using either _id or id
+            const device = localDevices.find(d => d._id === deviceId || d.id === deviceId);
+            if (!device) return;
+
+            // Use the correct identifier for the API call
+            const correctId = device._id || device.id;
+
+            // Determine the new state
+            const newState = { on: !device.state.on };
+
+            // Optimistically update UI
+            setLocalDevices(prevDevices =>
+                prevDevices.map(d =>
+                    (d._id === deviceId || d.id === deviceId)
+                        ? { ...d, state: { ...d.state, on: newState.on } }
+                        : d
+                )
+            );
+
+            // Call API to update device state
+            await deviceService.updateDeviceState(correctId, newState);
+
+        } catch (error) {
+            console.error('Error toggling device:', error);
+
+            // Revert optimistic update
+            setLocalDevices(prevDevices =>
+                prevDevices.map(d =>
+                    (d._id === deviceId || d.id === deviceId)
+                        ? { ...d, state: { ...d.state, on: !newState.on } }
+                        : d
+                )
+            );
+        }
     };
 
     // Filter devices by room
@@ -161,7 +273,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         <div className="device-grid">
             {filteredDevices.map(device => (
                 <div
-                    key={device.id}
+                    key={device._id || device.id || `device-${Math.random()}`}
                     className={`device-card ${device.state.on ? 'device-on' : 'device-off'}`}
                 >
                     <div className="device-header">
@@ -171,8 +283,8 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
                         <label className="switch">
                             <input
                                 type="checkbox"
-                                checked={device.state.on}
-                                onChange={() => toggleDevice(device.id)}
+                                checked={device.state.on || false}
+                                onChange={() => toggleDevice(device._id || device.id)}
                             />
                             <span className="slider"></span>
                         </label>

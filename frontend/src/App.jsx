@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 
 // Import CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -24,6 +26,13 @@ import './assets/css/insights.css';
 import './assets/css/device-add-modal.css';
 // CSS for automation page
 import './assets/css/automation.css';
+// CSS for profile page
+import './assets/css/profile.css';
+// css for the notifiactions components
+import './assets/css/notifications.css';
+// css for the notifiactions components
+import './assets/css/admin/admin.css';
+import './assets/css/admin/user-management.css';
 
 // Import components
 import LandingPage from './components/LandingPage';
@@ -33,9 +42,11 @@ import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import InsightsPage from './components/dashboard/InsightsPage';
 import AutomationPage from './components/dashboard/AutomationPage';
-
-// Import auth context
-import { AuthProvider } from './context/AuthContext';
+import ProfilePage from './components/dashboard/ProfilePage';
+import AdminDashboard from './components/admin/AdminDashboard';
+import UserManagement from './components/admin/UserManagement';
+import GlobalDeviceMonitor from './components/admin/GlobalDeviceMonitor';
+import AdminProfilePage from './components/admin/AdminProfilePage';
 
 function App() {
   // Add animation classes on scroll
@@ -64,25 +75,35 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
+      <SocketProvider>
+        <Router>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/insights" element={<InsightsPage />} />
-            <Route path="/automation" element={<AutomationPage />} />
-            {/* Add more protected routes here as needed */}
-          </Route>
+            {/* Homeowner protected routes */}
+            <Route element={<ProtectedRoute requiredRole="homeowner" />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/automation" element={<AutomationPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
 
-          {/* Catch all route - redirect to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Admin protected routes */}
+            <Route element={<ProtectedRoute requiredRole="admin" />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/devices" element={<GlobalDeviceMonitor />} />
+              <Route path="/admin/profile" element={<AdminProfilePage />} />
+            </Route>
+
+            {/* Catch all route - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </SocketProvider>
     </AuthProvider>
   );
 }

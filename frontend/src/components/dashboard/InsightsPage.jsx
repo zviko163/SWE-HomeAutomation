@@ -1,5 +1,6 @@
 // frontend/src/components/dashboard/InsightsPage.jsx
 import React, { useState, useEffect } from 'react';
+import sensorService from '../../services/sensorService';
 import { useNavigate } from 'react-router-dom';
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -9,8 +10,6 @@ import DeviceAddModal from './DeviceAddModal';
 
 const InsightsPage = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [insightsData, setInsightsData] = useState({
         temperatureHumidity: [],
         energyUsage: [],
@@ -19,7 +18,47 @@ const InsightsPage = () => {
     });
 
     // Time period selection
-    const [timeRange, setTimeRange] = useState('week'); // 'day', 'week', 'month'
+    const [timeRange, setTimeRange] = useState('historical'); // 'day', 'week', 'month'
+
+    const [sensorData, setSensorData] = useState({
+        temperatureHumidity: [],
+        energyUsage: [],
+        weeklyComparison: [],
+        latestReading: null
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchSensorData = async () => {
+            try {
+                setLoading(true);
+
+                // Fetch temperature/humidity data based on selected time range
+                const temperatureHumidityData = await sensorService.getAggregatedSensorData(timeRange);
+
+                // Modify rendering logic to use actual timestamps from database
+                setSensorData(prev => ({
+                    ...prev,
+                    temperatureHumidity: temperatureHumidityData
+                }));
+
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching sensor data:', error);
+                setError('Failed to load sensor data');
+                setLoading(false);
+            }
+        };
+
+        fetchSensorData();
+    }, [timeRange]);
+
+    // Helper function to calculate percentage change
+    const calculatePercentageChange = (current, previous) => {
+        if (!previous) return 0;
+        return Math.round(((current - previous) / previous) * 100);
+    };
 
     useEffect(() => {
         const fetchInsightsData = async () => {
@@ -211,22 +250,22 @@ const InsightsPage = () => {
         return (
             <div className="time-range-selector">
                 <button
-                    className={`time-btn ${timeRange === 'day' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('day')}
+                    className={`time-btn ${timeRange === '24h' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('24h')}
                 >
                     24h
                 </button>
                 <button
-                    className={`time-btn ${timeRange === 'week' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('week')}
+                    className={`time-btn ${timeRange === 'historical' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('historical')}
                 >
-                    7 Days
+                    Historical
                 </button>
                 <button
-                    className={`time-btn ${timeRange === 'month' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('month')}
+                    className={`time-btn ${timeRange === '7days' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('7days')}
                 >
-                    30 Days
+                    7 Days
                 </button>
             </div>
         );
@@ -430,7 +469,15 @@ const InsightsPage = () => {
                             >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
                                 <XAxis
-                                    dataKey="label"
+                                    dataKey="timestamp"
+                                    tickFormatter={(timestamp) => {
+                                        // Parse the timestamp from the database entry
+                                        const date = new Date(timestamp);
+                                        return date.toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric'
+                                        });
+                                    }}
                                     tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
                                     tickLine={false}
                                     axisLine={false}
@@ -651,11 +698,11 @@ const InsightsPage = () => {
                 >
                     <i className="fas fa-plus"></i>
                 </button>
-                <button className="nav-item">
-                    <i className="fas fa-bolt" onClick={() => navigate('/automation')}></i>
+                <button className="nav-item" onClick={() => navigate('/automation')}>
+                    <i className="fas fa-bolt"></i>
                     <span>Automation</span>
                 </button>
-                <button className="nav-item">
+                <button className="nav-item" onClick={() => navigate('/profile')}>
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
                 </button>

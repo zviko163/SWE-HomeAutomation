@@ -31,6 +31,10 @@ const ProfilePage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Add this state for confirmation dialog
+const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Password form data
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -77,6 +81,35 @@ const ProfilePage = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Update the handleDeleteAccount function
+  const handleDeleteAccount = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      setDeleteLoading(true);
+
+      // Delete the user from Firebase Authentication
+      await currentUser.delete();
+
+      // Navigate to the login page
+      navigate('/login');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+
+      // Handle re-authentication requirement (Firebase often requires this)
+      if (error.code === 'auth/requires-recent-login') {
+        setErrorMessage('For security reasons, please log out and log back in before deleting your account.');
+      } else {
+        setErrorMessage(error.message || 'Failed to delete account. Please try again.');
+      }
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirmation(false);
+    }
   };
 
   // Toggle documentation section expansion
@@ -749,7 +782,10 @@ const ProfilePage = () => {
               <i className="fas fa-sign-out-alt"></i>
               Log Out
             </button>
-            <button className="action-button delete-account-button">
+            <button
+              className="action-button delete-account-button"
+              onClick={handleDeleteAccount}
+            >
               <i className="fas fa-user-times"></i>
               Delete Account
             </button>
@@ -782,6 +818,39 @@ const ProfilePage = () => {
           <span>Profile</span>
         </button>
       </nav>
+
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteConfirmation && (
+        <div className="confirmation-overlay">
+          <div className="confirmation-dialog glass-card">
+            <h3>Delete Your Account?</h3>
+            <p>This action cannot be undone. All your data will be permanently deleted.</p>
+            <div className="confirmation-actions">
+              <button
+                className="cancel-button"
+                onClick={() => setShowDeleteConfirmation(false)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="delete-button"
+                onClick={confirmDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Account'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -582,3 +582,90 @@
         flex: 0 0 100px;
     }
 }
+
+/* Add to frontend/src/assets/css/profile.css */
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(64, 99, 84, 0.5);
+    /* Less intense, more transparent overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.confirmation-dialog {
+    width: 90%;
+    max-width: 400px;
+    padding: 1.5rem;
+    text-align: center;
+    animation: modalFadeIn 0.3s ease-out;
+    background-color: var(--light-bg);
+    /* Using your light background color */
+    border: 1px solid var(--glass-border);
+    color: var(--dark-sienna);
+}
+
+.confirmation-dialog h3 {
+    color: var(--dark-sienna);
+    /* Changed from danger to your dark text color */
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.confirmation-dialog p {
+    margin-bottom: 1.5rem;
+    color: var(--gray-700);
+}
+
+.confirmation-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delete-button {
+    background-color: var(--danger);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 25px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.delete-button:hover {
+    background-color: #d32f2f;
+    transform: translateY(-2px);
+}
+
+.delete-button:disabled {
+    background-color: #e57373;
+    cursor: not-allowed;
+    transform: none;
+}

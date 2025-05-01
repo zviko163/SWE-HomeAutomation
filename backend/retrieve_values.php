@@ -1,10 +1,15 @@
 <?php
 // retrieve_values.php
 
-$host = "localhost";
-$user = "root"; 
-$password = ""; 
-$dbname = "smart_home_db";
+// $host = "localhost";
+// $user = "root"; 
+// $password = ""; 
+// $dbname = "smart_home_db";
+
+$host = 'sql311.infinityfree.com'; 
+$user = 'if0_38545772';        
+$password = 'Theswink163';          
+$dbname = 'if0_38545772_swe_project'; 
 
 $conn = new mysqli($host, $user, $password, $dbname);
 

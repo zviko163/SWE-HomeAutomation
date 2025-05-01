@@ -8,7 +8,9 @@ import {
   updateEmail,
   updatePassword,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   EmailAuthProvider,
+  GoogleAuthProvider,
   signOut
 } from 'firebase/auth';
 
@@ -32,8 +34,9 @@ const ProfilePage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Add this state for confirmation dialog
-const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
 
   // Password form data
   const [passwordData, setPasswordData] = useState({
@@ -41,6 +44,15 @@ const [deleteLoading, setDeleteLoading] = useState(false);
     newPassword: '',
     confirmPassword: '',
   });
+
+  const isGoogleUser = () => {
+    if (!currentUser) return false;
+
+    // Check if the user's providerData includes Google
+    return currentUser.providerData.some(
+      provider => provider.providerId === 'google.com'
+    );
+  };
 
   // Validation errors
   const [errors, setErrors] = useState({});
@@ -92,7 +104,28 @@ const [deleteLoading, setDeleteLoading] = useState(false);
     try {
       setDeleteLoading(true);
 
-      // Delete the user from Firebase Authentication
+      // Re-authenticate based on provider
+      if (isGoogleUser()) {
+        // For Google users, create Google auth provider
+        const provider = new GoogleAuthProvider();
+        await reauthenticateWithPopup(currentUser, provider);
+      } else {
+        // For email/password users, reauthenticate with password
+        if (!deleteConfirmPassword) {
+          setErrorMessage('Please enter your password to confirm deletion');
+          setDeleteLoading(false);
+          return;
+        }
+
+        const credential = EmailAuthProvider.credential(
+          currentUser.email,
+          deleteConfirmPassword
+        );
+
+        await reauthenticateWithCredential(currentUser, credential);
+      }
+
+      // Now that user is re-authenticated, delete the account
       await currentUser.delete();
 
       // Navigate to the login page
@@ -100,15 +133,17 @@ const [deleteLoading, setDeleteLoading] = useState(false);
     } catch (error) {
       console.error('Error deleting account:', error);
 
-      // Handle re-authentication requirement (Firebase often requires this)
-      if (error.code === 'auth/requires-recent-login') {
-        setErrorMessage('For security reasons, please log out and log back in before deleting your account.');
+      if (error.code === 'auth/wrong-password') {
+        setErrorMessage('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMessage('Too many unsuccessful attempts. Please try again later.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setErrorMessage('Network error. Please check your connection and try again.');
       } else {
         setErrorMessage(error.message || 'Failed to delete account. Please try again.');
       }
     } finally {
       setDeleteLoading(false);
-      setShowDeleteConfirmation(false);
     }
   };
 
@@ -470,7 +505,7 @@ const [deleteLoading, setDeleteLoading] = useState(false);
         <section className="profile-section glass-card">
           <div className="section-header">
             <h2>Security</h2>
-            {!isChangingPassword && (
+            {!isGoogleUser() && !isChangingPassword && (
               <button
                 className="edit-button"
                 onClick={() => setIsChangingPassword(true)}
@@ -482,6 +517,7 @@ const [deleteLoading, setDeleteLoading] = useState(false);
 
           <div className="security-content">
             {isChangingPassword ? (
+              // Make sure this entire form exists and is properly formatted
               <form className="password-form" onSubmit={handlePasswordUpdate}>
                 <div className="form-group">
                   <label htmlFor="currentPassword">Current Password</label>
@@ -543,7 +579,7 @@ const [deleteLoading, setDeleteLoading] = useState(false);
                   <button
                     type="button"
                     className="cancel-button"
-                    onClick={handleCancelPasswordChange}
+                    onClick={() => setIsChangingPassword(false)}
                     disabled={processing}
                   >
                     Cancel
@@ -564,7 +600,21 @@ const [deleteLoading, setDeleteLoading] = useState(false);
                   </button>
                 </div>
               </form>
+            ) : isGoogleUser() ? (
+              // Google user message
+              <div className="security-summary">
+                <div className="security-info">
+                  <div className="security-icon">
+                    <i className="fab fa-google"></i>
+                  </div>
+                  <div className="security-text">
+                    <p>You signed in with Google. Password management is handled through Google.</p>
+                    <p className="security-tip">To change your password, visit your Google Account settings.</p>
+                  </div>
+                </div>
+              </div>
             ) : (
+              // Regular user security info
               <div className="security-summary">
                 <div className="security-info">
                   <div className="security-icon">
@@ -825,10 +875,34 @@ const [deleteLoading, setDeleteLoading] = useState(false);
           <div className="confirmation-dialog glass-card">
             <h3>Delete Your Account?</h3>
             <p>This action cannot be undone. All your data will be permanently deleted.</p>
+
+            {!isGoogleUser() && (
+              <div className="form-group mb-4">
+                <label htmlFor="deleteConfirmPassword">Enter your password to confirm:</label>
+                <input
+                  type="password"
+                  id="deleteConfirmPassword"
+                  value={deleteConfirmPassword}
+                  onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                  className={errorMessage ? 'error' : ''}
+                  placeholder="Your current password"
+                />
+                {errorMessage && <div className="error-message">{errorMessage}</div>}
+              </div>
+            )}
+
+            {isGoogleUser() && (
+              <p className="auth-note">You'll be prompted to sign in with Google to confirm.</p>
+            )}
+
             <div className="confirmation-actions">
               <button
                 className="cancel-button"
-                onClick={() => setShowDeleteConfirmation(false)}
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setDeleteConfirmPassword('');
+                  setErrorMessage('');
+                }}
                 disabled={deleteLoading}
               >
                 Cancel
@@ -836,12 +910,12 @@ const [deleteLoading, setDeleteLoading] = useState(false);
               <button
                 className="delete-button"
                 onClick={confirmDeleteAccount}
-                disabled={deleteLoading}
+                disabled={deleteLoading || (!isGoogleUser() && !deleteConfirmPassword)}
               >
                 {deleteLoading ? (
                   <>
                     <span className="spinner"></span>
-                    Deleting...
+                    Verifying...
                   </>
                 ) : (
                   'Delete Account'

@@ -669,3 +669,45 @@
     cursor: not-allowed;
     transform: none;
 }
+
+/* Add to frontend/src/assets/css/profile.css */
+.auth-note {
+    font-size: 0.875rem;
+    color: var(--blue-accent);
+    margin: 1rem 0;
+    font-style: italic;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.confirmation-dialog .form-group {
+    text-align: left;
+}
+
+.confirmation-dialog .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.confirmation-dialog .form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background-color: rgba(255, 255, 255, 0.8);
+    font-family: 'Space Mono', monospace;
+}
+
+.confirmation-dialog .form-group input.error {
+    border-color: var(--danger);
+}
+
+.confirmation-dialog .error-message {
+    color: var(--danger);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}

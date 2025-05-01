@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import { socketEvents } from '../../utils/socketEvents';
 import DeviceAddModal from './DeviceAddModal';
-import scheduleService from '../../services/scheduleService';
 
 const AutomationPage = () => {
     const navigate = useNavigate();
@@ -12,27 +11,14 @@ const AutomationPage = () => {
     const [error, setError] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [devices, setDevices] = useState([]);
-    const [schedules, setSchedules] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [deviceGroups, setDeviceGroups] = useState([]);
-    const [activeTab, setActiveTab] = useState('schedules'); // 'schedules', 'rooms', 'groups'
-    const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const [activeTab, setActiveTab] = useState('rooms'); // 'rooms', 'groups'
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const { socket, isConnected } = useSocket();
     const hasLoadedRef = useRef(false);
-
-    // Sample days for scheduling
-    const days = [
-        { id: 'mon', name: 'Mon', selected: false },
-        { id: 'tue', name: 'Tue', selected: false },
-        { id: 'wed', name: 'Wed', selected: false },
-        { id: 'thu', name: 'Thu', selected: false },
-        { id: 'fri', name: 'Fri', selected: false },
-        { id: 'sat', name: 'Sat', selected: false },
-        { id: 'sun', name: 'Sun', selected: false }
-    ];
 
     // Sample Devices Data
     const sampleDevices = [
@@ -101,40 +87,6 @@ const AutomationPage = () => {
         }
     ];
 
-    // Sample Schedules
-    const sampleSchedules = [
-        {
-            id: 'schedule-1',
-            name: 'Morning Lights',
-            deviceIds: ['light-1', 'light-3'],
-            timeOn: '07:00',
-            timeOff: '08:30',
-            days: ['mon', 'tue', 'wed', 'thu', 'fri'],
-            active: true,
-            color: '#F2FF66' // Primary color
-        },
-        {
-            id: 'schedule-2',
-            name: 'Evening Mode',
-            deviceIds: ['light-1', 'light-2', 'thermostat-1'],
-            timeOn: '18:00',
-            timeOff: '22:30',
-            days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-            active: true,
-            color: '#C0B395' // Secondary color
-        },
-        {
-            id: 'schedule-3',
-            name: 'Weekend Comfort',
-            deviceIds: ['thermostat-1', 'speaker-1'],
-            timeOn: '09:30',
-            timeOff: '23:00',
-            days: ['sat', 'sun'],
-            active: false,
-            color: '#406354' // Dark green color
-        }
-    ];
-
     // Sample Rooms
     const sampleRooms = [
         {
@@ -188,40 +140,9 @@ const AutomationPage = () => {
         }
     ];
 
-    // Socket.io listeners for schedules and groups
+    // Socket.io listeners for groups
     useEffect(() => {
         if (!socket || !isConnected) return;
-
-        // Handle schedule updates
-        const handleScheduleAdded = (schedule) => {
-            setSchedules(prev => [...prev, schedule]);
-        };
-
-        const handleScheduleUpdated = (updatedSchedule) => {
-            // If it's just an update notification with id and active status
-            if (updatedSchedule.id && typeof updatedSchedule.active !== 'undefined') {
-                setSchedules(prev =>
-                    prev.map(schedule =>
-                        schedule.id === updatedSchedule.id
-                            ? { ...schedule, active: updatedSchedule.active }
-                            : schedule
-                    )
-                );
-            } else {
-                // Full update
-                setSchedules(prev =>
-                    prev.map(schedule =>
-                        schedule.id === updatedSchedule.id
-                            ? updatedSchedule
-                            : schedule
-                    )
-                );
-            }
-        };
-
-        const handleScheduleRemoved = (data) => {
-            setSchedules(prev => prev.filter(schedule => schedule.id !== data.id));
-        };
 
         // Handle group updates
         const handleGroupAdded = (group) => {
@@ -243,18 +164,12 @@ const AutomationPage = () => {
         };
 
         // Register event listeners
-        socket.on(socketEvents.SCHEDULE_ADDED, handleScheduleAdded);
-        socket.on(socketEvents.SCHEDULE_UPDATED, handleScheduleUpdated);
-        socket.on(socketEvents.SCHEDULE_REMOVED, handleScheduleRemoved);
         socket.on(socketEvents.GROUP_ADDED, handleGroupAdded);
         socket.on(socketEvents.GROUP_UPDATED, handleGroupUpdated);
         socket.on(socketEvents.GROUP_REMOVED, handleGroupRemoved);
 
         // Cleanup listeners on component unmount
         return () => {
-            socket.off(socketEvents.SCHEDULE_ADDED, handleScheduleAdded);
-            socket.off(socketEvents.SCHEDULE_UPDATED, handleScheduleUpdated);
-            socket.off(socketEvents.SCHEDULE_REMOVED, handleScheduleRemoved);
             socket.off(socketEvents.GROUP_ADDED, handleGroupAdded);
             socket.off(socketEvents.GROUP_UPDATED, handleGroupUpdated);
             socket.off(socketEvents.GROUP_REMOVED, handleGroupRemoved);
@@ -267,18 +182,6 @@ const AutomationPage = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-
-                // Try to fetch schedules from API
-                try {
-                    const schedulesData = await scheduleService.getSchedules();
-                    setSchedules(schedulesData);
-                } catch (err) {
-                    console.log('Schedule API fetch failed, using sample data');
-                    // Only use sample data if nothing has been loaded
-                    if (schedules.length === 0) {
-                        setSchedules(sampleSchedules);
-                    }
-                }
 
                 // For now, still use sample data for other entities
                 // Eventually you'll replace these with API calls too
@@ -301,47 +204,6 @@ const AutomationPage = () => {
     // Handle adding a new device
     const handleAddDevice = (newDevice) => {
         setDevices(prevDevices => [...prevDevices, newDevice]);
-    };
-
-    // Toggle schedule active state
-    const toggleScheduleActive = async (scheduleId) => {
-        try {
-            // Optimistically update UI
-            setSchedules(prevSchedules =>
-                prevSchedules.map(schedule =>
-                    schedule.id === scheduleId
-                        ? { ...schedule, active: !schedule.active }
-                        : schedule
-                )
-            );
-
-            // Call API to toggle schedule
-            await scheduleService.toggleSchedule(scheduleId);
-
-            // Note: Socket.io will handle the official state update
-        } catch (error) {
-            console.error('Error toggling schedule:', error);
-
-            // Revert the optimistic update on error
-            setSchedules(prevSchedules =>
-                prevSchedules.map(schedule =>
-                    schedule.id === scheduleId
-                        ? { ...schedule, active: !schedule.active }
-                        : schedule
-                )
-            );
-        }
-    };
-
-    // Handle schedule selection
-    const handleScheduleClick = (schedule) => {
-        if (selectedSchedule && selectedSchedule.id === schedule.id) {
-            setSelectedSchedule(null);
-            setEditMode(false);
-        } else {
-            setSelectedSchedule(schedule);
-            setEditMode(false);
-        }
     };
 
     // Handle room selection
@@ -376,63 +238,14 @@ const AutomationPage = () => {
         return devices.filter(device => group.deviceIds.includes(device.id));
     };
 
-    // Create a new schedule
-    const createSchedule = async (scheduleData) => {
-        try {
-            const newSchedule = await scheduleService.createSchedule(scheduleData);
-            // You could update state here, but socket.io should handle it
-            return newSchedule;
-        } catch (error) {
-            console.error('Error creating schedule:', error);
-            throw error;
-        }
-    };
-
-    // Update an existing schedule
-    const updateSchedule = async (id, scheduleData) => {
-        try {
-            const updatedSchedule = await scheduleService.updateSchedule(id, scheduleData);
-            // You could update state here, but socket.io should handle it
-            return updatedSchedule;
-        } catch (error) {
-            console.error('Error updating schedule:', error);
-            throw error;
-        }
-    };
-
-    // Delete a schedule
-    const deleteSchedule = async (id) => {
-        try {
-            await scheduleService.deleteSchedule(id);
-            // You could update state here, but socket.io should handle it
-        } catch (error) {
-            console.error('Error deleting schedule:', error);
-            throw error;
-        }
-    };
-
     // Render tab buttons
     const renderTabButtons = () => {
         return (
             <div className="automation-tabs">
                 <button
-                    className={`tab-btn ${activeTab === 'schedules' ? 'active' : ''}`}
-                    onClick={() => {
-                        setActiveTab('schedules');
-                        setSelectedSchedule(null);
-                        setSelectedRoom(null);
-                        setSelectedGroup(null);
-                        setEditMode(false);
-                    }}
-                >
-                    <i className="fas fa-clock"></i>
-                    <span>Schedules</span>
-                </button>
-                <button
                     className={`tab-btn ${activeTab === 'rooms' ? 'active' : ''}`}
                     onClick={() => {
                         setActiveTab('rooms');
-                        setSelectedSchedule(null);
                         setSelectedRoom(null);
                         setSelectedGroup(null);
                         setEditMode(false);
@@ -445,7 +258,6 @@ const AutomationPage = () => {
                     className={`tab-btn ${activeTab === 'groups' ? 'active' : ''}`}
                     onClick={() => {
                         setActiveTab('groups');
-                        setSelectedSchedule(null);
                         setSelectedRoom(null);
                         setSelectedGroup(null);
                         setEditMode(false);
@@ -454,260 +266,6 @@ const AutomationPage = () => {
                     <i className="fas fa-object-group"></i>
                     <span>Groups</span>
                 </button>
-            </div>
-        );
-    };
-
-    // Render schedules tab
-    const renderSchedulesTab = () => {
-        return (
-            <div className="schedules-container">
-                <div className="section-header">
-                    <h2>Your Schedules</h2>
-                    <button
-                        className="add-btn"
-                        onClick={() => {
-                            // Set up a new schedule template
-                            const newScheduleTemplate = {
-                                name: 'New Schedule',
-                                timeOn: '08:00',
-                                timeOff: '20:00',
-                                days: ['mon', 'tue', 'wed', 'thu', 'fri'],
-                                deviceIds: [],
-                                active: true
-                            };
-
-                            // Either directly create it, or set it as the editing schedule
-                            setSelectedSchedule(newScheduleTemplate);
-                            setEditMode(true);
-                            // Alternatively, you could open a modal for creating schedules
-                        }}
-                    >
-                        <i className="fas fa-plus"></i>
-                        <span>Add Schedule</span>
-                    </button>
-                </div>
-
-                <div className="schedules-grid">
-                    {schedules.length === 0 ? (
-                        <div className="empty-state">
-                            <i className="fas fa-calendar-alt"></i>
-                            <h3>No Schedules Yet</h3>
-                            <p>Create a schedule to automate your devices</p>
-                        </div>
-                    ) : (
-                        schedules.map(schedule => (
-                            <div
-                                key={schedule.id}
-                                className={`schedule-card glass-card ${selectedSchedule && selectedSchedule.id === schedule.id ? 'selected' : ''} ${schedule.active ? 'active' : 'inactive'}`}
-                                onClick={() => handleScheduleClick(schedule)}
-                            >
-                                <div className="schedule-header" style={{ borderColor: schedule.color }}>
-                                    <div className="schedule-name">{schedule.name}</div>
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={schedule.active}
-                                            onChange={(e) => {
-                                                e.stopPropagation();
-                                                toggleScheduleActive(schedule.id);
-                                            }}
-                                        />
-                                        <span className="slider"></span>
-                                    </label>
-                                </div>
-
-                                <div className="schedule-times">
-                                    <div className="time-block">
-                                        <span className="time-label">ON</span>
-                                        <span className="time-value">{schedule.timeOn}</span>
-                                    </div>
-                                    <div className="time-divider">
-                                        <i className="fas fa-long-arrow-alt-right"></i>
-                                    </div>
-                                    <div className="time-block">
-                                        <span className="time-label">OFF</span>
-                                        <span className="time-value">{schedule.timeOff}</span>
-                                    </div>
-                                </div>
-
-                                <div className="schedule-days">
-                                    {days.map(day => (
-                                        <div
-                                            key={day.id}
-                                            className={`day-circle ${schedule.days.includes(day.id) ? 'active' : ''}`}
-                                        >
-                                            {day.name[0]}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="schedule-devices">
-                                    <span className="devices-count">
-                                        <i className="fas fa-plug"></i> {schedule.deviceIds.length} devices
-                                    </span>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {selectedSchedule && (
-                    <div className="schedule-detail glass-card">
-                        <div className="detail-header">
-                            <h3>{selectedSchedule.name}</h3>
-                            <div className="detail-actions">
-                                <button
-                                    className={`edit-btn ${editMode ? 'active' : ''}`}
-                                    onClick={() => setEditMode(!editMode)}
-                                >
-                                    <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                    className="delete-btn"
-                                    onClick={async () => {
-                                        if (window.confirm('Are you sure you want to delete this schedule?')) {
-                                            try {
-                                                setIsSubmitting(true); // Add this state if you don't have it
-                                                await deleteSchedule(selectedSchedule.id);
-                                                setSelectedSchedule(null);
-                                                setEditMode(false);
-                                                // Consider adding a success notification here
-                                            } catch (error) {
-                                                // Handle error, perhaps with a toast notification
-                                                console.error('Failed to delete schedule:', error);
-                                            } finally {
-                                                setIsSubmitting(false);
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <i className="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="detail-content">
-                            <div className="detail-section">
-                                <h4>Time Settings</h4>
-                                <div className="time-settings">
-                                    <div className="time-field">
-                                        <label>On Time</label>
-                                        {editMode ? (
-                                            <input type="time" value={selectedSchedule.timeOn} />
-                                        ) : (
-                                            <div className="time-display">{selectedSchedule.timeOn}</div>
-                                        )}
-                                    </div>
-                                    <div className="time-field">
-                                        <label>Off Time</label>
-                                        {editMode ? (
-                                            <input type="time" value={selectedSchedule.timeOff} />
-                                        ) : (
-                                            <div className="time-display">{selectedSchedule.timeOff}</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="detail-section">
-                                <h4>Active Days</h4>
-                                <div className="days-selection">
-                                    {days.map(day => (
-                                        <div
-                                            key={day.id}
-                                            className={`day-btn ${selectedSchedule.days.includes(day.id) ? 'active' : ''}`}
-                                        >
-                                            {day.name}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="detail-section">
-                                <h4>Devices ({selectedSchedule.deviceIds.length})</h4>
-                                <div className="devices-list">
-                                    {devices
-                                        .filter(device => selectedSchedule.deviceIds.includes(device.id))
-                                        .map(device => (
-                                            <div key={device.id} className="device-item">
-                                                <div className="device-icon">
-                                                    <i className={`fas ${device.icon}`}></i>
-                                                </div>
-                                                <div className="device-info">
-                                                    <div className="device-name">{device.name}</div>
-                                                    <div className="device-room">{device.room}</div>
-                                                </div>
-                                                {editMode && (
-                                                    <button className="remove-device-btn">
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))
-                                    }
-                                    {editMode && (
-                                        <button className="add-device-btn">
-                                            <i className="fas fa-plus"></i>
-                                            <span>Add Device</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {editMode && (
-                                <div className="detail-actions-bottom">
-                                    <button
-                                        className="btn-cancel"
-                                        onClick={() => {
-                                            setEditMode(false);
-                                            // Reset any temporary changes
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className="btn-save"
-                                        onClick={async () => {
-                                            try {
-                                                setIsSubmitting(true);
-
-                                                // Get the updated schedule data from your form state
-                                                // This assumes you have state tracking the edited schedule
-                                                const updatedData = {
-                                                    name: editedSchedule.name,
-                                                    timeOn: editedSchedule.timeOn,
-                                                    timeOff: editedSchedule.timeOff,
-                                                    days: editedSchedule.days,
-                                                    devices: editedSchedule.deviceIds,
-                                                    // Include other fields as needed
-                                                };
-
-                                                await updateSchedule(selectedSchedule.id, updatedData);
-                                                setEditMode(false);
-                                                // Success notification if desired
-                                            } catch (error) {
-                                                console.error('Failed to update schedule:', error);
-                                                // Error handling
-                                            } finally {
-                                                setIsSubmitting(false);
-                                            }
-                                        }}
-                                    >
-                                        {isSubmitting ? (
-                                            <>
-                                                <span className="spinner"></span>
-                                                Saving...
-                                            </>
-                                        ) : (
-                                            'Save Changes'
-                                        )}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };
@@ -784,11 +342,7 @@ const AutomationPage = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={schedule.active}
-                                                        onChange={(e) => {
-                                                            e.stopPropagation();
-                                                            toggleScheduleActive(schedule.id);
-                                                        }}
+                                                        checked={device.state.on}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>
@@ -937,14 +491,12 @@ const AutomationPage = () => {
     // Render content based on active tab
     const renderContent = () => {
         switch (activeTab) {
-            case 'schedules':
-                return renderSchedulesTab();
             case 'rooms':
                 return renderRoomsTab();
             case 'groups':
                 return renderGroupsTab();
             default:
-                return renderSchedulesTab();
+                return renderRoomsTab();
         }
     };
 
@@ -986,7 +538,7 @@ const AutomationPage = () => {
                         <i className="fas fa-bolt"></i>
                         <span>Automation</span>
                     </button>
-                    <button className="nav-item">
+                    <button className="nav-item" onClick={() => navigate('/profile')}>
                         <i className="fas fa-user"></i>
                         <span>Profile</span>
                     </button>
@@ -1040,7 +592,7 @@ const AutomationPage = () => {
                         <i className="fas fa-bolt"></i>
                         <span>Automation</span>
                     </button>
-                    <button className="nav-item">
+                    <button className="nav-item" onClick={() => navigate('/profile')}>
                         <i className="fas fa-user"></i>
                         <span>Profile</span>
                     </button>
@@ -1106,7 +658,6 @@ const AutomationPage = () => {
             />
         </div>
     );
-
 };
 
 export default AutomationPage;

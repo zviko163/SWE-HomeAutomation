@@ -88,12 +88,20 @@ const AdminDashboard = () => {
                 <div className="admin-header-content">
                     <h1>System Overview</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -150,56 +158,6 @@ const AdminDashboard = () => {
                     </div>
                 </section>
 
-                {/* Recent Activity Section */}
-                <section className="admin-activity-section">
-                    <div className="section-header">
-                        <h2>Recent Activity</h2>
-                        <button className="view-all-btn">View All</button>
-                    </div>
-
-                    <div className="activity-list">
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-user-plus"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">New user registered: <strong>Michael Chen</strong></p>
-                                <p className="activity-time">10 minutes ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-exclamation-circle"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">Alert: <strong>Temperature sensor offline</strong> in Johnson household</p>
-                                <p className="activity-time">25 minutes ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-plus-circle"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">New device added: <strong>Smart Thermostat</strong> by Sarah Wilson</p>
-                                <p className="activity-time">1 hour ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-sign-in-alt"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">Admin login: <strong>System Administrator</strong></p>
-                                <p className="activity-time">2 hours ago</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
                 {/* Quick Actions Section */}
                 <section className="admin-actions-section">
                     <h2>Quick Actions</h2>
@@ -211,26 +169,19 @@ const AdminDashboard = () => {
                             <h3>Add New User</h3>
                         </Link>
 
-                        <Link to="/admin/devices" className="action-card">
-                            <div className="action-icon">
-                                <i className="fas fa-search"></i>
-                            </div>
-                            <h3>Check Device Status</h3>
-                        </Link>
-
-                        <Link to="/admin/users" className="action-card">
-                            <div className="action-icon">
-                                <i className="fas fa-envelope"></i>
-                            </div>
-                            <h3>Send Notification</h3>
-                        </Link>
-
-                        <Link to="/admin/users" className="action-card">
+                        <div className="action-card" onClick={() => window.open('http://localhost:5001/api/reports/devices', '_blank')}>
                             <div className="action-icon">
                                 <i className="fas fa-download"></i>
                             </div>
-                            <h3>Export Reports</h3>
-                        </Link>
+                            <h3>Export Devices Report</h3>
+                        </div>
+
+                        <div className="action-card" onClick={() => window.open('http://localhost:5001/api/reports/users', '_blank')}>
+                            <div className="action-icon">
+                                <i className="fas fa-file-alt"></i>
+                            </div>
+                            <h3>Export Users Report</h3>
+                        </div>
                     </div>
                 </section>
             </main>

@@ -413,3 +413,18 @@
         margin-bottom: 0.5rem;
     }
 }
+
+/* Add this to your admin.css file */
+.admin-initials {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background-color: var(--primary-light);
+    color: var(--dark-sienna);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+}

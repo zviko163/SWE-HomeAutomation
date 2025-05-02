@@ -13,6 +13,7 @@ const deviceRoutes = require('./routes/deviceRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +79,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Socket.io connection handlers
 io.on('connection', (socket) => {

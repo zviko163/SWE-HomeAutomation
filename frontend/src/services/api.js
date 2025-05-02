@@ -1,5 +1,5 @@
 // frontend/src/services/api.js
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = 'https://web-production-1479.up.railway.app';
 
 /**
  * Base API service with common HTTP methods

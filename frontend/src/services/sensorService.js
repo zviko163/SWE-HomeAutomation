@@ -1,9 +1,6 @@
 // frontend/src/services/sensorService.js
 import apiService from './api';
 
-/**
- * Service for sensor-related API calls
- */
 class SensorService {
     /**
      * Get sensor data with optional filtering
@@ -12,7 +9,7 @@ class SensorService {
      */
     async getSensorData(params = {}) {
         try {
-            const response = await apiService.get('sensors', params);
+            const response = await apiService.get('sensors_data', params);
             return response.data;
         } catch (error) {
             console.error('Error fetching sensor data:', error);
@@ -21,24 +18,23 @@ class SensorService {
     }
 
     /**
-     * Get aggregated sensor data
-     * @param {string} period - Aggregation period ('hour', 'day', 'month')
-     * @param {Object} options - Additional query options
+     * Get aggregated sensor data for a specific time range
+     * @param {string} timeRange - Time range for data aggregation ('24h', '7days', 'historical')
      * @returns {Promise<Array>} - Aggregated sensor data
      */
-    async getAggregatedSensorData(period = 'historical', options = {}) {
+    async getAggregatedSensorData(timeRange = 'historical') {
         try {
-            const response = await apiService.get('sensors/aggregate', {
-                period,
-                ...options
-            });
-
-            // Transform data preserving original timestamps
-            return response.data.map(item => ({
-                timestamp: item._id.timeRecorded || item._id, // Use timeRecorded directly
-                temperature: item.avgTemperature,
-                humidity: item.avgHumidity
-            }));
+            const response = await apiService.get('sensors_data', { timeRange });
+            
+            // Transform the data to match the expected format for graphs
+            if (response.data && Array.isArray(response.data)) {
+                return response.data.map(item => ({
+                    timestamp: new Date(item.timestamp),
+                    temperature: item.temperature,
+                    humidity: item.humidity
+                }));
+            }
+            return [];
         } catch (error) {
             console.error('Error fetching aggregated sensor data:', error);
             throw error;
@@ -51,8 +47,12 @@ class SensorService {
      */
     async getLatestSensorData() {
         try {
-            const response = await apiService.get('sensors/latest');
-            return response;
+            const response = await apiService.get('sensors_data');
+            // Return the first item from the data array if it exists
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                return response.data[0]; // Most recent reading
+            }
+            return null;
         } catch (error) {
             console.error('Error fetching latest sensor data:', error);
             throw error;
@@ -60,6 +60,5 @@ class SensorService {
     }
 }
 
-// Create and export singleton instance
 const sensorService = new SensorService();
 export default sensorService;

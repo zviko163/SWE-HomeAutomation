@@ -37,42 +37,43 @@
 .insights-time-selector {
     display: flex;
     justify-content: center;
-    margin-bottom: 0.5rem;
+    margin: 1rem 0;
+    padding: 0.5rem;
 }
 
 .time-range-selector {
     display: flex;
-    gap: 0.5rem;
-    background-color: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    gap: 0.75rem;
+    background-color: var(--white);
     border: 1px solid var(--glass-border);
-    border-radius: 25px;
-    padding: 0.25rem;
+    border-radius: 30px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .time-btn {
     background-color: transparent;
     border: none;
-    color: var(--dark-sienna);
+    color: var(--gray-600);
     font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .time-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--primary-light);
+    color: var(--dark-sienna);
 }
 
 .time-btn.active {
     background-color: var(--primary);
     color: var(--dark-sienna);
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(242, 255, 102, 0.3);
 }
 
 /* Insights Sections */
@@ -96,9 +97,70 @@
 .insights-chart-container {
     width: 100%;
     overflow: hidden;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    box-shadow: var(--card-shadow);
 }
 
-/* Custom Tooltip Styles */
+.chart-container {
+    background: transparent;
+    border-radius: 12px;
+    margin-bottom: 40px;
+    height: 300px;
+    width: 100%;
+}
+
+/* Enhance tooltip styles */
+.custom-tooltip {
+    background-color: var(--white);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-time {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark-sienna);
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.5rem;
+}
+
+/* Add grid lines styling */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+    stroke: var(--glass-border);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+/* Style axis labels */
+.recharts-xaxis-label,
+.recharts-yaxis-label {
+    fill: var(--gray-700);
+    font-size: 0.8rem;
+}
+
+/* Style the line itself */
+.recharts-line-curve {
+    stroke-width: 2;
+    stroke: var(--blue-accent);
+}
+
+/* Style data points */
+.recharts-dot {
+    fill: var(--white);
+    stroke: var(--blue-accent);
+    stroke-width: 2;
+}
+
 .custom-tooltip {
     background-color: rgba(255, 255, 255, 0.95);
     border: 1px solid var(--glass-border);
@@ -106,6 +168,42 @@
     padding: 0.75rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     font-family: 'Space Mono', monospace;
+}
+
+.tooltip-time {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--dark-sienna);
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.25rem;
+}
+
+.reading-card {
+    transition: transform 0.2s ease;
+}
+
+.reading-card:hover {
+    transform: translateY(-2px);
+}
+
+.reading-card i {
+    opacity: 0.8;
+}
+
+/* Adjust the chart size */
+.recharts-wrapper {
+    font-size: 12px;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+    stroke: #e0e0e0;
+    stroke-opacity: 0.5;
+}
+
+.recharts-legend-item {
+    font-size: 0.875rem;
 }
 
 .tooltip-label {
@@ -341,5 +439,107 @@
 
     .comparison-item:nth-last-child(-n+3) {
         border-bottom: none;
+    }
+}
+
+.fixed-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    padding: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link i {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link span {
+    font-size: 0.75rem;
+}
+
+.nav-link.active {
+    color: #007bff;
+}
+
+.add-button {
+    margin-top: -2rem;
+}
+
+.plus-circle {
+    width: 3rem;
+    height: 3rem;
+    background: #ffeb3b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.plus-circle i {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.metric-selector {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.metric-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background-color: var(--glass-bg);
+    color: var(--dark-sienna);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.metric-select:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.metric-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(242, 255, 102, 0.2);
+}
+
+@media (min-width: 768px) {
+    .controls-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 2rem;
     }
 }

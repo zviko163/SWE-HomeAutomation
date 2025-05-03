@@ -111,7 +111,8 @@
 .form-group select {
     width: 100%;
     padding: 0.75rem;
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     font-size: 0.875rem;
     background-color: rgba(255, 255, 255, 0.8);
     border: 1px solid var(--glass-border);
@@ -192,7 +193,8 @@
 
 .btn-cancel,
 .btn-save {
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     font-weight: 500;
     font-size: 0.875rem;
     padding: 0.75rem 1.25rem;

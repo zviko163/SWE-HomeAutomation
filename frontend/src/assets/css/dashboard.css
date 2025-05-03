@@ -27,7 +27,8 @@
 }
 
 body {
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     background-color: var(--light-bg);
     color: var(--dark-sienna);
     margin: 0;

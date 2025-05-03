@@ -1,6 +1,7 @@
 /* Base styles */
 body {
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     background-color: #ECEAE5;
     color: #33171E;
 }
@@ -31,7 +32,8 @@ body {
 
 /* Button styles */
 .btn {
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     font-weight: 500;
     letter-spacing: 0.5px;
     transition: all 0.3s ease;
@@ -128,7 +130,8 @@ body {
 
 /* Form styles */
 .form-control {
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     background-color: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(51, 23, 30, 0.2);
     border-radius: 8px;
@@ -236,7 +239,8 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
 }
 
 .tab-btn:hover {

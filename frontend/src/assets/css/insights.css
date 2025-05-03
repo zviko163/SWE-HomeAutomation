@@ -94,6 +94,7 @@
     color: var(--dark-sienna);
 }
 
+/* Chart Container Styling */
 .insights-chart-container {
     width: 100%;
     overflow: hidden;
@@ -105,6 +106,59 @@
     padding: 1.5rem;
     margin-top: 1rem;
     box-shadow: var(--card-shadow);
+}
+
+/* Chart Grid Styling */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-dasharray: 3 3;
+}
+
+/* Chart Background */
+.recharts-surface {
+    background: transparent;
+}
+
+/* Axis Styling */
+.recharts-xAxis .recharts-axis-line,
+.recharts-yAxis .recharts-axis-line {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
+.recharts-text {
+    fill: #666;
+    font-size: 12px;
+}
+
+/* Legend Styling */
+.recharts-legend-wrapper {
+    padding-bottom: 20px;
+}
+
+.recharts-legend-item-text {
+    color: #666 !important;
+}
+
+/* Tooltip Styling */
+.recharts-tooltip-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Line Colors */
+.recharts-line-temperature {
+    stroke: #FF0000;
+}
+
+.recharts-line-humidity {
+    stroke: #4ECDC4;
+}
+
+.recharts-line-power {
+    stroke: #FFD93D;
 }
 
 .chart-container {
@@ -447,11 +501,11 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: #f8f9fa;
+    background: var(--white);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0.75rem 1rem;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     z-index: 1000;
 }
@@ -461,7 +515,7 @@
     flex-direction: column;
     align-items: center;
     text-decoration: none;
-    color: #666;
+    color: var(--gray-600);
     padding: 0.5rem;
     transition: color 0.3s ease;
 }
@@ -476,7 +530,7 @@
 }
 
 .nav-link.active {
-    color: #007bff;
+    color: var(--primary);
 }
 
 .add-button {
@@ -486,7 +540,7 @@
 .plus-circle {
     width: 3rem;
     height: 3rem;
-    background: #ffeb3b;
+    background: var(--primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -496,7 +550,8 @@
 
 .plus-circle i {
     font-size: 1.5rem;
-    color: #333;
+    color: var(--dark-sienna);
+    margin-bottom: 0;
 }
 
 .controls-container {

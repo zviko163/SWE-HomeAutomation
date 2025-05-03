@@ -151,7 +151,7 @@ const InsightsPage = () => {
                                         yAxisId="temp"
                                         domain={['auto', 'auto']}
                                         label={{ value: '°C', angle: -90, position: 'insideLeft', offset: 8 }}
-                                        stroke="#FF6B6B"
+                                        stroke="#FF0000"
                                         fontSize={12}
                                     />
                                 )}
@@ -200,7 +200,7 @@ const InsightsPage = () => {
                                         yAxisId="temp"
                                         type="monotone"
                                         dataKey="temperature"
-                                        stroke="#FF6B6B"
+                                        stroke="#FF0000"
                                         strokeWidth={2}
                                         dot={false}
                                         activeDot={{ r: 4 }}
@@ -236,6 +236,31 @@ const InsightsPage = () => {
                     </div>
                 </>
             )}
+
+            {/* Navigation Section */}
+            <nav className="fixed-bottom-nav">
+                <Link to="/dashboard" className="nav-link">
+                    <i className="fas fa-home"></i>
+                    <span>Home</span>
+                </Link>
+                <Link to="/insights" className="nav-link active">
+                    <i className="fas fa-chart-line"></i>
+                    <span>Insights</span>
+                </Link>
+                <Link to="/" className="nav-link add-button">
+                    <div className="plus-circle">
+                        <i className="fas fa-plus"></i>
+                    </div>
+                </Link>
+                <Link to="/automation" className="nav-link">
+                    <i className="fas fa-sliders-h"></i>
+                    <span>Automation</span>
+                </Link>
+                <Link to="/profile" className="nav-link">
+                    <i className="fas fa-user"></i>
+                    <span>Profile</span>
+                </Link>
+            </nav>
         </div>
     );
 };

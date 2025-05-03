@@ -299,3 +299,35 @@ input:checked+.slider:before {
 .animate-fadeInUp {
     animation: fadeInUp 0.6s ease-out forwards;
 }
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin: 0 -2rem;
+    /* This extends beyond the container padding */
+    padding-left: 2rem;
+    padding-right: 2rem;
+    width: calc(100% + 4rem);
+    /* Compensate for the negative margins */
+}
+
+/* Update the container to have proper overflow handling */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 100%;
+    padding-bottom: 70px;
+    position: relative;
+    overflow-x: hidden;
+    /* Prevent horizontal scrollbar */
+}

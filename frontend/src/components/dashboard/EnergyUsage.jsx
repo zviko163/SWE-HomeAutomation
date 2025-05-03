@@ -118,57 +118,25 @@ const EnergyUsage = () => {
 
     return (
         <div className="glass-card energy-widget">
-            <div className="energy-header">
-                <h3>Electric Usage</h3>
-                <span className="energy-period">Today - 24h Avg</span>
-            </div>
+            
 
-            <div className="energy-stats">
-                <div className="current-usage">
-                    <h2>{energyData.currentUsage} <span className="unit">kWh</span></h2>
-                    <p className="label">Current</p>
-                </div>
-
-                <div className="stats-divider"></div>
-
-                <div className="total-usage">
-                    <h4>{energyData.todayTotal} <span className="unit">kWh</span></h4>
-                    <p className="label">Today's Total</p>
-                    <p className="comparison">
-                        <i className={`fas ${energyData.weekComparison < 0 ? 'fa-arrow-down' : 'fa-arrow-up'}`}></i>
-                        <span className={energyData.weekComparison < 0 ? 'text-success' : 'text-danger'}>
-                            {Math.abs(energyData.weekComparison)}% vs last week
-                        </span>
-                    </p>
-                </div>
-            </div>
-
-            <div className="energy-chart">
-                <ResponsiveContainer width="100%" height={80}>
-                    <LineChart data={energyData.chartData}>
-                        <XAxis
-                            dataKey="time"
-                            tick={{ fontSize: 10 }}
-                            interval="preserveStartEnd"
-                            tickFormatter={(value) => {
-                                const date = new Date(value);
-                                return date.getHours() % 6 === 0 ? date.getHours() + 'h' : '';
-                            }}
-                            axisLine={false}
-                            tickLine={false}
-                        />
-                        <YAxis hide domain={['auto', 'auto']} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Line
-                            type="monotone"
-                            dataKey="usage"
-                            stroke="var(--blue-accent)"
-                            strokeWidth={2}
-                            dot={false}
-                            activeDot={{ r: 4, fill: "var(--blue-accent)", stroke: "white", strokeWidth: 2 }}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
+            <div className="energy-image-container" style={{
+                width: "100%",
+                height: "calc(100% - 40px)", /* Subtract header height */
+                overflow: "hidden",
+                borderRadius: "10px",
+                marginTop: "10px"
+            }}>
+                <img
+                    src="/src/assets/images/dash-image.jpg"
+                    alt="Energy Dashboard"
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "8px"
+                    }}
+                />
             </div>
         </div>
     );

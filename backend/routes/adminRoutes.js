@@ -5,6 +5,11 @@ const router = express.Router();
 // Import controllers
 const adminController = require('../controllers/adminController');
 const userController = require('../controllers/userController');
+const adminDeviceController = require('../controllers/adminDeviceController');
+
+// Admin global device management
+router.get('/devices', adminDeviceController.getAllDevices);
+router.delete('/devices/:id', adminDeviceController.deleteDevice);
 
 // Admin dashboard stats
 router.get('/stats/users', adminController.getUserStats);

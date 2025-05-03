@@ -450,3 +450,27 @@
         display: none;
     }
 }
+
+/* Device name with icon styling */
+.device-name-with-icon {
+    display: flex;
+    align-items: center;
+}
+
+.device-name-with-icon i {
+    margin-right: 0.5rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* Highlight offline devices */
+.status-badge.offline {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--danger);
+}
+
+/* Highlight online devices */
+.status-badge.online {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--success);
+}

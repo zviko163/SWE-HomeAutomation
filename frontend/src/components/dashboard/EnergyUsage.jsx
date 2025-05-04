@@ -1,7 +1,7 @@
 // frontend/src/components/dashboard/EnergyUsage.jsx
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import dashImg from '../../assets/images/dash-img.jpg';
+import dashImg from '../assets/images/dash-img.jpg';
 
 const EnergyUsage = () => {
     const [energyData, setEnergyData] = useState({

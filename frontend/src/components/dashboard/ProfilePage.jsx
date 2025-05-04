@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/ProfilePage.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -296,8 +296,8 @@ const ProfilePage = () => {
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // In a real application, you would upload this to storage
-      // For now, we'll just create a local URL for preview
+      
+      // create a local URL for preview
       const imageUrl = URL.createObjectURL(file);
       setProfileData(prev => ({
         ...prev,

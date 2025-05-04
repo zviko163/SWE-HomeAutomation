@@ -1,52 +1,102 @@
-// frontend/src/components/dashboard/InsightsPage.jsx
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import sensorService from '../../services/sensorService';
-import { useNavigate } from 'react-router-dom';
 import {
-    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-    Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+    LineChart, Line, XAxis, YAxis, CartesianGrid,
+    Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import DeviceAddModal from './DeviceAddModal';
+import '../../assets/css/insights.css';
 
 const InsightsPage = () => {
     const navigate = useNavigate();
-    const [insightsData, setInsightsData] = useState({
-        temperatureHumidity: [],
-        energyUsage: [],
-        weeklyComparison: [],
-        deviceUsage: []
-    });
-
-    // Time period selection
-    const [timeRange, setTimeRange] = useState('historical'); // 'day', 'week', 'month'
-
+    const [timeRange, setTimeRange] = useState('24h');
+    const [selectedMetric, setSelectedMetric] = useState('all'); // 'all', 'temperature', 'humidity', 'power'
     const [sensorData, setSensorData] = useState({
         temperatureHumidity: [],
-        energyUsage: [],
-        weeklyComparison: [],
         latestReading: null
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Time range selector component
+    const TimeRangeSelector = () => (
+        <div className="insights-time-selector">
+            <div className="time-range-selector">
+                <button 
+                    className={`time-btn ${timeRange === '24h' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('24h')}
+                >
+                    24 Hours
+                </button>
+                <button 
+                    className={`time-btn ${timeRange === '7days' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('7days')}
+                >
+                    7 Days
+                </button>
+                <button 
+                    className={`time-btn ${timeRange === 'historical' ? 'active' : ''}`}
+                    onClick={() => setTimeRange('historical')}
+                >
+                    Historical
+                </button>
+            </div>
+        </div>
+    );
+
+    // Metric selector component
+    const MetricSelector = () => (
+        <div className="metric-selector mb-4">
+            <select 
+                className="metric-select"
+                value={selectedMetric}
+                onChange={(e) => setSelectedMetric(e.target.value)}
+            >
+                <option value="all">All Metrics</option>
+                <option value="temperature">Temperature</option>
+                <option value="humidity">Humidity</option>
+                <option value="power">Power Consumption</option>
+            </select>
+        </div>
+    );
+
     useEffect(() => {
         const fetchSensorData = async () => {
             try {
                 setLoading(true);
+                setError(null);
 
-                // Fetch temperature/humidity data based on selected time range
-                const temperatureHumidityData = await sensorService.getAggregatedSensorData(timeRange);
+                // Generate sample data if API fails
+                const sampleData = Array.from({ length: 24 }, (_, i) => {
+                    const date = new Date();
+                    date.setHours(date.getHours() - 23 + i);
+                    return {
+                        timestamp: date.getTime(),
+                        temperature: 20 + Math.random() * 5,
+                        humidity: 40 + Math.random() * 20,
+                        power_consumption: 100 + Math.random() * 50
+                    };
+                });
 
-                // Modify rendering logic to use actual timestamps from database
-                setSensorData(prev => ({
-                    ...prev,
-                    temperatureHumidity: temperatureHumidityData
-                }));
-
-                setLoading(false);
+                try {
+                    const aggregatedData = await sensorService.getAggregatedSensorData(timeRange);
+                    const latestReading = await sensorService.getLatestSensorData();
+                    
+                    setSensorData({
+                        temperatureHumidity: aggregatedData.length > 0 ? aggregatedData : sampleData,
+                        latestReading: latestReading
+                    });
+                } catch (error) {
+                    console.warn('API fetch failed, using sample data');
+                    setSensorData({
+                        temperatureHumidity: sampleData,
+                        latestReading: sampleData[sampleData.length - 1]
+                    });
+                }
             } catch (error) {
-                console.error('Error fetching sensor data:', error);
+                console.error('Error in data handling:', error);
                 setError('Failed to load sensor data');
+            } finally {
                 setLoading(false);
             }
         };
@@ -54,664 +104,163 @@ const InsightsPage = () => {
         fetchSensorData();
     }, [timeRange]);
 
-    // Helper function to calculate percentage change
-    const calculatePercentageChange = (current, previous) => {
-        if (!previous) return 0;
-        return Math.round(((current - previous) / previous) * 100);
-    };
-
-    useEffect(() => {
-        const fetchInsightsData = async () => {
-            try {
-                setLoading(true);
-
-                // Simulate API loading time
-                await new Promise(resolve => setTimeout(resolve, 1200));
-
-                // Generate sample data based on time range
-                const data = generateSampleData(timeRange);
-                setInsightsData(data);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching insights data:', err);
-                setError('Failed to load insights data. Please try again later.');
-                setLoading(false);
-            }
-        };
-
-        fetchInsightsData();
-    }, [timeRange]);
-
-    // Generate sample data based on selected time range
-    const generateSampleData = (range) => {
-        let tempHumidityData = [];
-        let energyUsageData = [];
-        let weeklyComparisonData = [];
-        let deviceUsageData = [];
-
-        const now = new Date();
-        let dataPoints;
-        let format;
-
-        // Set number of data points and format based on range
-        switch (range) {
-            case 'day':
-                dataPoints = 24;
-                format = 'hour';
-                break;
-            case 'week':
-                dataPoints = 7;
-                format = 'day';
-                break;
-            case 'month':
-                dataPoints = 30;
-                format = 'day';
-                break;
-            default:
-                dataPoints = 7;
-                format = 'day';
-        }
-
-        // Generate temperature/humidity data
-        for (let i = 0; i < dataPoints; i++) {
-            const date = new Date(now);
-            if (format === 'hour') {
-                date.setHours(now.getHours() - (dataPoints - 1) + i);
-            } else {
-                date.setDate(now.getDate() - (dataPoints - 1) + i);
-            }
-
-            // Create random but realistic temperature and humidity values
-            // Temperature fluctuates through the day/week
-            const baseTemp = 22; // Base temperature in Celsius
-            const hourOfDay = date.getHours();
-            let tempVariation;
-
-            if (hourOfDay >= 0 && hourOfDay < 6) {
-                // Coolest in early morning
-                tempVariation = -2 + Math.random() * 1;
-            } else if (hourOfDay >= 6 && hourOfDay < 12) {
-                // Warming up in morning
-                tempVariation = -1 + Math.random() * 2;
-            } else if (hourOfDay >= 12 && hourOfDay < 18) {
-                // Warmest in afternoon
-                tempVariation = 1 + Math.random() * 2;
-            } else {
-                // Cooling in evening
-                tempVariation = 0 + Math.random() * 1;
-            }
-
-            // Add some variation based on day of week (warmer on weekends for example)
-            if (format !== 'hour') {
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    tempVariation += 0.5; // Slightly warmer on weekends
-                }
-            }
-
-            const temperature = Math.round((baseTemp + tempVariation) * 10) / 10;
-
-            // Humidity inversely related to temperature but with some randomness
-            const baseHumidity = 50;
-            const humidityVariation = (baseTemp - temperature) * 2 + (Math.random() * 10 - 5);
-            const humidity = Math.min(Math.max(Math.round(baseHumidity + humidityVariation), 30), 80);
-
-            tempHumidityData.push({
-                timestamp: date.toISOString(),
-                label: format === 'hour'
-                    ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }),
-                temperature,
-                humidity
-            });
-        }
-
-        // Generate energy usage data
-        for (let i = 0; i < dataPoints; i++) {
-            const date = new Date(now);
-            if (format === 'hour') {
-                date.setHours(now.getHours() - (dataPoints - 1) + i);
-            } else {
-                date.setDate(now.getDate() - (dataPoints - 1) + i);
-            }
-
-            // Energy usage patterns
-            const hourOfDay = date.getHours();
-            let baseUsage;
-
-            if (format === 'hour') {
-                if (hourOfDay >= 7 && hourOfDay < 10) {
-                    // Morning peak
-                    baseUsage = 2.5 + Math.random() * 1;
-                } else if (hourOfDay >= 10 && hourOfDay < 17) {
-                    // Day usage
-                    baseUsage = 1.5 + Math.random() * 1;
-                } else if (hourOfDay >= 17 && hourOfDay < 22) {
-                    // Evening peak
-                    baseUsage = 3 + Math.random() * 1.5;
-                } else {
-                    // Night usage
-                    baseUsage = 0.5 + Math.random() * 0.5;
-                }
-            } else {
-                // Daily patterns - weekends higher
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    // Weekends
-                    baseUsage = 12 + Math.random() * 6;
-                } else {
-                    // Weekdays
-                    baseUsage = 8 + Math.random() * 6;
-                }
-            }
-
-            energyUsageData.push({
-                timestamp: date.toISOString(),
-                label: format === 'hour'
-                    ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }),
-                usage: Math.round(baseUsage * 10) / 10
-            });
-        }
-
-        // Generate weekly comparison data (last 7 days vs previous 7 days)
-        const categories = ['Temperature', 'Humidity', 'Energy', 'Lights On', 'Security'];
-        categories.forEach(category => {
-            const currentValue = 70 + Math.random() * 30;
-            const previousValue = currentValue * (0.85 + Math.random() * 0.3); // 15% variation up or down
-
-            weeklyComparisonData.push({
-                category,
-                current: Math.round(currentValue),
-                previous: Math.round(previousValue),
-                change: Math.round((currentValue - previousValue) / previousValue * 100)
-            });
-        });
-
-        // Generate device usage data
-        const devices = ['Living Room Lights', 'Kitchen Appliances', 'Bedroom Lights', 'TV', 'Thermostat'];
-        devices.forEach(device => {
-            deviceUsageData.push({
-                name: device,
-                usage: Math.round(10 + Math.random() * 90)
-            });
-        });
-
-        return {
-            temperatureHumidity: tempHumidityData,
-            energyUsage: energyUsageData,
-            weeklyComparison: weeklyComparisonData,
-            deviceUsage: deviceUsageData
-        };
-    };
-
-    // Render time range selector buttons
-    const renderTimeRangeSelector = () => {
-        return (
-            <div className="time-range-selector">
-                <button
-                    className={`time-btn ${timeRange === '24h' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('24h')}
-                >
-                    24h
-                </button>
-                <button
-                    className={`time-btn ${timeRange === 'historical' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('historical')}
-                >
-                    Historical
-                </button>
-                <button
-                    className={`time-btn ${timeRange === '7days' ? 'active' : ''}`}
-                    onClick={() => setTimeRange('7days')}
-                >
-                    7 Days
-                </button>
-            </div>
-        );
-    };
-
-    // Custom tooltip for temperature/humidity chart
-    const TempHumidityTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="custom-tooltip">
-                    <p className="tooltip-label">{label}</p>
-                    <p className="tooltip-temp">
-                        <span className="tooltip-icon"><i className="fas fa-temperature-high"></i></span>
-                        {payload[0].value}°C
-                    </p>
-                    <p className="tooltip-humidity">
-                        <span className="tooltip-icon"><i className="fas fa-tint"></i></span>
-                        {payload[1].value}%
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-
-    // Custom tooltip for energy chart
-    const EnergyTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="custom-tooltip">
-                    <p className="tooltip-label">{label}</p>
-                    <p className="tooltip-energy">
-                        <span className="tooltip-icon"><i className="fas fa-bolt"></i></span>
-                        {payload[0].value} kWh
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-
-    // Custom tooltip for device usage chart
-    const DeviceTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="custom-tooltip">
-                    <p className="tooltip-label">{label}</p>
-                    <p className="tooltip-usage">
-                        <span className="tooltip-icon"><i className="fas fa-clock"></i></span>
-                        {payload[0].value}% usage
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-
-    // edits to make the add modal work
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [devices, setDevices] = useState([]);
-    const handleAddDevice = (newDevice) => {
-        // In a real app, you would send this to your backend
-        // For now, we'll just add it to our local state
-        setDevices(prevDevices => [...prevDevices, newDevice]);
-    };
-
-    // Loading state
-    if (loading) {
-        return (
-            <div className="dashboard-container">
-                <header className="dashboard-header">
-                    <div className="user-greeting">
-                        <h1>Insights</h1>
-                        <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                </header>
-
-                <main className="dashboard-content">
-                    <div className="insights-loading">
-                        <div className="loading-pulse"></div>
-                        <p>Loading insights data...</p>
-                    </div>
-                </main>
-
-                {/* Bottom Navigation */}
-                <nav className="bottom-nav">
-                    <button className="nav-item" onClick={() => navigate('/dashboard')}>
-                        <i className="fas fa-home"></i>
-                        <span>Home</span>
-                    </button>
-                    <button className="nav-item active">
-                        <i className="fas fa-chart-bar"></i>
-                        <span>Insights</span>
-                    </button>
-                    <button
-                        className="nav-item add-button"
-                        onClick={() => setIsAddModalOpen(true)}
-                    >
-                        <i className="fas fa-plus"></i>
-                    </button>
-                    <button className="nav-item">
-                        <i className="fas fa-bolt"></i>
-                        <span>Automation</span>
-                    </button>
-                    <button className="nav-item">
-                        <i className="fas fa-user"></i>
-                        <span>Profile</span>
-                    </button>
-                </nav>
-            </div>
-        );
-    }
-
-    // Error state
-    if (error) {
-        return (
-            <div className="dashboard-container">
-                <header className="dashboard-header">
-                    <div className="user-greeting">
-                        <h1>Insights</h1>
-                        <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                </header>
-
-                <main className="dashboard-content">
-                    <div className="insights-error">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <h3>Unable to load insights</h3>
-                        <p>{error}</p>
-                        <button
-                            className="btn btn-primary mt-3"
-                            onClick={() => setLoading(true)}
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                </main>
-
-                {/* Bottom Navigation */}
-                <nav className="bottom-nav">
-                    <button className="nav-item" onClick={() => navigate('/dashboard')}>
-                        <i className="fas fa-home"></i>
-                        <span>Home</span>
-                    </button>
-                    <button className="nav-item active">
-                        <i className="fas fa-chart-bar"></i>
-                        <span>Insights</span>
-                    </button>
-                    <button
-                        className="nav-item add-button"
-                        onClick={() => setIsAddModalOpen(true)}
-                    >
-                        <i className="fas fa-plus"></i>
-                    </button>
-                    <button className="nav-item">
-                        <i className="fas fa-bolt"></i>
-                        <span>Automation</span>
-                    </button>
-                    <button className="nav-item">
-                        <i className="fas fa-user"></i>
-                        <span>Profile</span>
-                    </button>
-                </nav>
-            </div>
-        );
-    }
-
     return (
-        <div className="dashboard-container">
-            <header className="dashboard-header">
-                <div className="user-greeting">
-                    <h1>Insights</h1>
-                    <p className="date">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <div className="insights-container p-4">
+            <div className="insights-header mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Environmental Insights</h2>
+                <div className="controls-container">
+                    <TimeRangeSelector />
+                    <MetricSelector />
                 </div>
-                <div className="header-actions">
-                    <button className="icon-button notification-btn">
-                        <i className="fas fa-bell"></i>
-                    </button>
-                    <button className="icon-button settings-btn">
-                        <i className="fas fa-cog"></i>
-                    </button>
-                </div>
-            </header>
+            </div>
 
-            <main className="dashboard-content insights-content">
-                {/* Time Range Selector */}
-                <div className="insights-time-selector">
-                    {renderTimeRangeSelector()}
-                </div>
-
-                {/* Temperature and Humidity Chart */}
-                <section className="insights-section glass-card">
-                    <div className="insights-section-header">
-                        <h2>Temperature & Humidity</h2>
+            {loading ? (
+                <div className="loading-state">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
+                </div>
+            ) : error ? (
+                <div className="error-state">
+                    <i className="fas fa-exclamation-circle"></i>
+                    <p>{error}</p>
+                </div>
+            ) : (
+                <>
                     <div className="insights-chart-container">
-                        <ResponsiveContainer width="100%" height={250}>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Environmental Trends</h3>
+                        <ResponsiveContainer width="100%" height={400}>
                             <LineChart
-                                data={insightsData.temperatureHumidity}
-                                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                                data={sensorData.temperatureHumidity}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.2)" />
                                 <XAxis
                                     dataKey="timestamp"
                                     tickFormatter={(timestamp) => {
-                                        // Parse the timestamp from the database entry
                                         const date = new Date(timestamp);
-                                        return date.toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric'
-                                        });
+                                        return timeRange === '24h'
+                                            ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                            : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
                                     }}
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
+                                    stroke="#666"
+                                    fontSize={12}
                                 />
-                                <YAxis
-                                    yAxisId="temp"
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    orientation="left"
-                                    domain={['dataMin - 2', 'dataMax + 2']}
-                                    label={{
-                                        value: '°C',
-                                        position: 'insideLeft',
-                                        angle: -90,
-                                        fill: 'var(--gray-600)',
-                                        fontSize: 10,
-                                        dx: -15
+                                {(selectedMetric === 'all' || selectedMetric === 'temperature') && (
+                                    <YAxis
+                                        yAxisId="temp"
+                                        domain={['auto', 'auto']}
+                                        label={{ value: '°C', angle: -90, position: 'insideLeft', offset: 8 }}
+                                        stroke="#FF0000"
+                                        fontSize={12}
+                                    />
+                                )}
+                                {(selectedMetric === 'all' || selectedMetric === 'humidity') && (
+                                    <YAxis
+                                        yAxisId="humidity"
+                                        orientation="right"
+                                        domain={[0, 100]}
+                                        label={{ value: '%', angle: 90, position: 'insideRight', offset: 8 }}
+                                        stroke="#4ECDC4"
+                                        fontSize={12}
+                                    />
+                                )}
+                                {(selectedMetric === 'all' || selectedMetric === 'power') && (
+                                    <YAxis
+                                        yAxisId="power"
+                                        orientation="right"
+                                        domain={[0, 'auto']}
+                                        label={{ value: 'W', angle: 90, position: 'insideRight', offset: 45 }}
+                                        stroke="#FFD93D"
+                                        fontSize={12}
+                                    />
+                                )}
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        borderRadius: '8px'
+                                    }}
+                                    formatter={(value, name) => {
+                                        if (name === "Power") {
+                                            return [`${value.toFixed(2)} W`, name];
+                                        }
+                                        return [value, name];
                                     }}
                                 />
-                                <YAxis
-                                    yAxisId="humidity"
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    orientation="right"
-                                    domain={[0, 100]}
-                                    label={{
-                                        value: '%',
-                                        position: 'insideRight',
-                                        angle: -90,
-                                        fill: 'var(--gray-600)',
-                                        fontSize: 10,
-                                        dx: 15
-                                    }}
-                                />
-                                <Tooltip content={<TempHumidityTooltip />} />
-                                <Legend
-                                    verticalAlign="top"
+                                <Legend 
+                                    verticalAlign="top" 
                                     height={36}
-                                    iconType="circle"
-                                    iconSize={8}
-                                    wrapperStyle={{ fontSize: '12px' }}
+                                    wrapperStyle={{
+                                        paddingBottom: '20px'
+                                    }}
                                 />
-                                <Line
-                                    type="monotone"
-                                    dataKey="temperature"
-                                    stroke="var(--danger)"
-                                    strokeWidth={2}
-                                    dot={{ r: 3, strokeWidth: 1 }}
-                                    activeDot={{ r: 5, strokeWidth: 0 }}
-                                    yAxisId="temp"
-                                    name="Temperature"
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="humidity"
-                                    stroke="var(--blue-accent)"
-                                    strokeWidth={2}
-                                    dot={{ r: 3, strokeWidth: 1 }}
-                                    activeDot={{ r: 5, strokeWidth: 0 }}
-                                    yAxisId="humidity"
-                                    name="Humidity"
-                                />
+                                {(selectedMetric === 'all' || selectedMetric === 'temperature') && (
+                                    <Line
+                                        yAxisId="temp"
+                                        type="monotone"
+                                        dataKey="temperature"
+                                        stroke="#FF0000"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4 }}
+                                        name="Temperature"
+                                    />
+                                )}
+                                {(selectedMetric === 'all' || selectedMetric === 'humidity') && (
+                                    <Line
+                                        yAxisId="humidity"
+                                        type="monotone"
+                                        dataKey="humidity"
+                                        stroke="#4ECDC4"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4 }}
+                                        name="Humidity"
+                                    />
+                                )}
+                                {(selectedMetric === 'all' || selectedMetric === 'power') && (
+                                    <Line
+                                        yAxisId="power"
+                                        type="monotone"
+                                        dataKey="power_consumption"
+                                        stroke="#FFD93D"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4 }}
+                                        name="Power"
+                                    />
+                                )}
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
-                </section>
+                </>
+            )}
 
-                {/* Energy Usage Chart */}
-                <section className="insights-section glass-card">
-                    <div className="insights-section-header">
-                        <h2>Energy Usage</h2>
-                    </div>
-                    <div className="insights-chart-container">
-                        <ResponsiveContainer width="100%" height={250}>
-                            <AreaChart
-                                data={insightsData.energyUsage}
-                                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                                <XAxis
-                                    dataKey="label"
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                />
-                                <YAxis
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    label={{
-                                        value: 'kWh',
-                                        position: 'insideLeft',
-                                        angle: -90,
-                                        fill: 'var(--gray-600)',
-                                        fontSize: 10,
-                                        dx: -15
-                                    }}
-                                />
-                                <Tooltip content={<EnergyTooltip />} />
-                                <Legend
-                                    verticalAlign="top"
-                                    height={36}
-                                    iconType="circle"
-                                    iconSize={8}
-                                    wrapperStyle={{ fontSize: '12px' }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="usage"
-                                    name="Energy Usage"
-                                    stroke="var(--primary)"
-                                    strokeWidth={2}
-                                    fill="url(#energyGradient)"
-                                    activeDot={{ r: 5, strokeWidth: 0 }}
-                                />
-                                <defs>
-                                    <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
-                                        <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.1} />
-                                    </linearGradient>
-                                </defs>
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </section>
-
-                {/* Weekly Comparisons */}
-                <section className="insights-section glass-card">
-                    <div className="insights-section-header">
-                        <h2>Weekly Comparison</h2>
-                    </div>
-                    <div className="weekly-comparison-container">
-                        <div className="comparison-period">
-                            <div className="comparison-dates">
-                                <div className="current-period">Current Week</div>
-                                <div className="vs">vs</div>
-                                <div className="previous-period">Previous Week</div>
-                            </div>
-                        </div>
-                        <div className="comparison-metrics">
-                            {insightsData.weeklyComparison.map((item, index) => (
-                                <div key={index} className="comparison-item">
-                                    <div className="comparison-category">{item.category}</div>
-                                    <div className="comparison-values">
-                                        <div className="current-value">{item.current}</div>
-                                        <div className="vs-arrow">
-                                            <i className={`fas fa-arrow-${item.change >= 0 ? 'up' : 'down'}`}></i>
-                                        </div>
-                                        <div className="previous-value">{item.previous}</div>
-                                    </div>
-                                    <div className={`comparison-change ${item.change >= 0 ? 'positive' : 'negative'}`}>
-                                        {item.change >= 0 ? '+' : ''}{item.change}%
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Device Usage Chart */}
-                <section className="insights-section glass-card">
-                    <div className="insights-section-header">
-                        <h2>Device Usage</h2>
-                    </div>
-                    <div className="insights-chart-container">
-                        <ResponsiveContainer width="100%" height={200}>
-                            <BarChart
-                                data={insightsData.deviceUsage}
-                                margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                                layout="vertical"
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.1)" />
-                                <XAxis
-                                    type="number"
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    domain={[0, 100]}
-                                    unit="%"
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="name"
-                                    tick={{ fontSize: 10, fill: 'var(--gray-600)' }}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    width={120}
-                                />
-                                <Tooltip content={<DeviceTooltip />} />
-                                <Bar
-                                    dataKey="usage"
-                                    fill="var(--dark-green)"
-                                    background={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-                                    radius={[0, 4, 4, 0]}
-                                    name="Usage"
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </section>
-            </main>
-
-            {/* Bottom Navigation */}
-            <nav className="bottom-nav">
-                <button className="nav-item" onClick={() => navigate('/dashboard')}>
+            {/* Navigation Section */}
+            <nav className="fixed-bottom-nav">
+                <Link to="/dashboard" className="nav-link">
                     <i className="fas fa-home"></i>
                     <span>Home</span>
-                </button>
-                <button className="nav-item active">
-                    <i className="fas fa-chart-bar"></i>
+                </Link>
+                <Link to="/insights" className="nav-link active">
+                    <i className="fas fa-chart-line"></i>
                     <span>Insights</span>
-                </button>
-                <button
-                    className="nav-item add-button"
-                    onClick={() => setIsAddModalOpen(true)}
-                >
-                    <i className="fas fa-plus"></i>
-                </button>
-                <button className="nav-item" onClick={() => navigate('/automation')}>
-                    <i className="fas fa-bolt"></i>
+                </Link>
+                <Link to="/" className="nav-link add-button">
+                    <div className="plus-circle">
+                        <i className="fas fa-plus"></i>
+                    </div>
+                </Link>
+                <Link to="/automation" className="nav-link">
+                    <i className="fas fa-sliders-h"></i>
                     <span>Automation</span>
-                </button>
-                <button className="nav-item" onClick={() => navigate('/profile')}>
+                </Link>
+                <Link to="/profile" className="nav-link">
                     <i className="fas fa-user"></i>
                     <span>Profile</span>
-                </button>
+                </Link>
             </nav>
-            <DeviceAddModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                onAddDevice={handleAddDevice}
-            />
         </div>
     );
 };

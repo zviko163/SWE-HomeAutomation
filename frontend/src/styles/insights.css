@@ -1,0 +1,43 @@
+.custom-tooltip {
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-time {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #666;
+}
+
+.time-range-selector {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.time-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    background-color: white;
+    color: #4a5568;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.time-btn.active {
+    background-color: #4a5568;
+    color: white;
+    border-color: #4a5568;
+}
+
+.time-btn:hover {
+    background-color: #f7fafc;
+}
+
+.time-btn.active:hover {
+    background-color: #2d3748;
+}

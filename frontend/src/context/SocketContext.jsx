@@ -13,14 +13,16 @@ export const SocketProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
 
     useEffect(() => {
-        // Only connect to socket if user is authenticated
         if (isAuthenticated) {
-            const socketInstance = io(import.meta.env.VITE_API_URL.replace('/api', ''), { // Remove /api from the base URL
-                path: '/socket.io', // Exactly match the backend path
-                transports: ['polling', 'websocket'],
+            const socketInstance = io('https://web-production-1479.up.railway.app', {
+                transports: ['websocket', 'polling'],
                 reconnection: true,
                 reconnectionAttempts: 3,
                 reconnectionDelay: 1000,
+                withCredentials: true,
+                cors: {
+                    origin: "http://localhost:5173"
+                }
             });
 
             socketInstance.on('connect', () => {

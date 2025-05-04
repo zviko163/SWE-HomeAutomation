@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/QuickRoutines.jsx
+
 import React, { useState } from 'react';
 
 const QuickRoutines = () => {
@@ -33,8 +33,7 @@ const QuickRoutines = () => {
     ];
 
     const handleRoutineClick = (routineId) => {
-        // In a real app, this would trigger the actual routine via your backend
-        // For now, we'll just toggle the active state for UI feedback
+   
 
         if (activeRoutine === routineId) {
             setActiveRoutine(null);

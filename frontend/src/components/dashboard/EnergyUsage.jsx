@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/EnergyUsage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import dashImg from '../../assets/images/dash-image.jpg';
@@ -14,8 +14,7 @@ const EnergyUsage = () => {
     });
 
     useEffect(() => {
-        // In a real app, this would fetch from your backend API
-        // For now, we'll simulate with sample data
+   
         const fetchEnergyData = async () => {
             try {
                 // Simulate API loading time

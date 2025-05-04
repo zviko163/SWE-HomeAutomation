@@ -1,6 +1,7 @@
 // frontend/src/components/dashboard/EnergyUsage.jsx
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import dashImg from '../../assets/dash-image.jpg';
 
 const EnergyUsage = () => {
     const [energyData, setEnergyData] = useState({
@@ -128,7 +129,7 @@ const EnergyUsage = () => {
                 marginTop: "10px"
             }}>
                 <img
-                    src="/src/assets/images/dash-image.jpg"
+                    src={dashImg}
                     alt="Energy Dashboard"
                     style={{
                         width: "100%",

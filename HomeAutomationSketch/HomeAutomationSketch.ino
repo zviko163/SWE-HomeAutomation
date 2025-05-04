@@ -1,52 +1,73 @@
-// #include <NewPing.h>
+/**
+ * Smart Home Automation System
+ * This sketch implements a home automation system using ESP32 with multiple sensors
+ * and a web interface for monitoring and control.
+ * Features:
+ * - Temperature and humidity monitoring (DHT22)
+ * - Light level sensing (LDR)
+ * - Motion detection (PIR)
+ * - Distance measurement (Ultrasonic)
+ * - Rain detection
+ * - Current measurement (ACS712)
+ * - Automated lighting control
+ * - Door control with motion detection
+ * - Web interface with dashboard and settings
+ */
 
+// Required libraries for functionality
 #include <LittleFS.h>
-
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
 #include <DHT.h>
 
-// Define sensor pins and types
-#define DHTPIN 4
-#define DHTTYPE DHT22
-#define LDRPIN 34
-#define PIRPIN 35
-#define BUZZERPIN 32
-#define TRIGPIN 18
-#define ECHOPIN 19
-// #define MAX_DISTANCE 400
-#define WATERPIN 33 // Water sensor pin for rain detection pulse
-#define LED_LIGHT 25 // LED for lights 
-#define LED_LIGHT2 23
-#define RELAY_DOOR 26  // Relay for door motor
-#define LEDPIN 2                           // Heartbeat LED pin
+// Pin definitions for all sensors and actuators
+#define DHTPIN 4          // Temperature and humidity sensor pin
+#define DHTTYPE DHT22     // DHT22 (AM2302) sensor type
+#define LDRPIN 34         // Light Dependent Resistor pin
+#define PIRPIN 35         // Passive Infrared motion sensor pin
+#define BUZZERPIN 32      // Buzzer for alerts
+#define TRIGPIN 18        // Ultrasonic sensor trigger pin
+#define ECHOPIN 19        // Ultrasonic sensor echo pin
+#define WATERPIN 33       // Rain sensor pin
+#define LED_LIGHT 25      // Main LED light pin
+#define LED_LIGHT2 23     // Secondary LED light pin
+#define RELAY_DOOR 26     // Door control relay pin
+#define LEDPIN 2          // Built-in LED for heartbeat indication
+#define ACS712_PIN 27     // Current sensor pin
 
-#define ACS712_PIN 27  
-
-// NewPing sonar(TRIGPIN, ECHOPIN, MAX_DISTANCE);
+// Initialize DHT sensor
 DHT dht(DHTPIN, DHTTYPE);
 
-// Constants for ACS712 5A version
-const float sensitivity = 0.185; // 185mV per Amp for 5A versionpower
-const float Vref_measured = 0.05;
+// Constants for ACS712 current sensor calibration
+const float sensitivity = 0.185;     // 185mV per Amp for 5A version
+const float Vref_measured = 0.05;    // Measured reference voltage
 
-// WiFi credentials
-const char* ssid = "COLOMBIANA 4";
-const char* password = ".123";
-const char* apSSID = "HomeAutomationAP";
-const char* apPassword = "paden";
+// WiFi configuration
+const char* ssid = "COLOMBIANA 4";           // WiFi network name
+const char* password = ".123";               // WiFi password
+const char* apSSID = "HomeAutomationAP";     // Access Point name
+const char* apPassword = "paden";            // Access Point password
 
+// Global variables for timing and thresholds
+unsigned long lastSensorRead = 0;            // Last sensor reading timestamp
+unsigned long lastDoorOpen = 0;              // Last door operation timestamp
+unsigned long lastBuzzerTone = 0;            // Last buzzer activation timestamp
+const unsigned long SENSOR_INTERVAL = 5000;   // Sensor reading interval (5 seconds)
+const unsigned long DOOR_OPEN_TIME = 5000;    // Door open duration (5 seconds)
+const unsigned long BUZZER_DURATION = 1000;   // Buzzer sound duration (1 second)
+int currentLightThreshold = 1500;            // Light threshold for automation
+int currentDistanceThreshold = 300;          // Distance threshold for automation
 
-// Access Point Settings
+// Access Point network configuration
 IPAddress local_ip(192, 168, 2, 1);
 IPAddress gateway(192, 168, 2, 1);
 IPAddress subnet(255, 255, 255, 0);
 
+// Initialize web server on port 80
 WebServer server(80);
 
-// Function Prototypes
 void blinkHeartbeat();
 float measureDistance();
 void handleRoot();
@@ -89,6 +110,7 @@ void setup() {
   server.on("/light/off", handleLightOff);
   server.on("/door/open", handleDoorOpen);
   server.on("/door/close", handleDoorClose);
+  server.on("/save-settings", handleSaveSettings);
   server.begin();
 
   Serial.println("Server started");
@@ -124,35 +146,125 @@ void handleRoot() {
   String hum = humToString(humidity);
 
   String html = "<!DOCTYPE html><html><head><title>ESP32 Smart Home</title>";
-  html += "<style>button{padding:10px 20px;margin:5px;font-size:16px;}</style>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<style>";
+  html += "* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }";
+  html += "body { background: #f0f2f5; padding: 20px; }";
+  html += ".container { max-width: 1200px; margin: 0 auto; }";
+  html += ".card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }";
+  html += "h1, h2 { color: #1a73e8; margin-bottom: 20px; }";
+  html += ".grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }";
+  html += ".sensor-value { font-size: 24px; color: #333; margin-bottom: 5px; }";
+  html += ".sensor-label { color: #666; font-size: 14px; }";
+  html += "button { background: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; transition: 0.3s; }";
+  html += "button:hover { background: #1557b0; }";
+  html += ".settings-form { display: grid; gap: 15px; }";
+  html += ".form-group { display: grid; gap: 5px; }";
+  html += "input[type='number'] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }";
+  html += ".tab { overflow: hidden; border-radius: 5px 5px 0 0; }";
+  html += ".tab button { background: #f1f1f1; float: left; border: none; padding: 14px 16px; transition: 0.3s; }";
+  html += ".tab button:hover { background: #ddd; }";
+  html += ".tab button.active { background: #1a73e8; color: white; }";
+  html += ".tabcontent { display: none; padding: 20px 0; }";
+  html += "#dashboard { display: block; }";
+  html += "</style>";
+  
   html += "<script>";
+  html += "let lightThreshold = localStorage.getItem('lightThreshold') || 500;";
+  html += "let distanceThreshold = localStorage.getItem('distanceThreshold') || 300;";
+  
+  html += "function openTab(evt, tabName) {";
+  html += "  var i, tabcontent, tablinks;";
+  html += "  tabcontent = document.getElementsByClassName('tabcontent');";
+  html += "  for (i = 0; i < tabcontent.length; i++) {";
+  html += "    tabcontent[i].style.display = 'none';";
+  html += "  }";
+  html += "  tablinks = document.getElementsByClassName('tablinks');";
+  html += "  for (i = 0; i < tablinks.length; i++) {";
+  html += "    tablinks[i].className = tablinks[i].className.replace(' active', '');";
+  html += "  }";
+  html += "  document.getElementById(tabName).style.display = 'block';";
+  html += "  evt.currentTarget.className += ' active';";
+  html += "}";
+  
+  html += "function saveSettings() {";
+  html += "  lightThreshold = document.getElementById('lightThreshold').value;";
+  html += "  distanceThreshold = document.getElementById('distanceThreshold').value;";
+  html += "  localStorage.setItem('lightThreshold', lightThreshold);";
+  html += "  localStorage.setItem('distanceThreshold', distanceThreshold);";
+  html += "  fetch('/save-settings', {";
+  html += "    method: 'POST',";
+  html += "    headers: {'Content-Type': 'application/x-www-form-urlencoded'},";
+  html += "    body: 'lightThreshold=' + lightThreshold + '&distanceThreshold=' + distanceThreshold";
+  html += "  }).then(response => {";
+  html += "    if (response.ok) {";
+  html += "      alert('Settings saved!');";
+  html += "    } else {";
+  html += "      alert('Error saving settings');";
+  html += "    }";
+  html += "  });";
+  html += "}";
+  
   html += "function controlLight(state) {";
   html += "  fetch('/light/' + state).then(response => {";
   html += "    console.log('Light ' + state);";
   html += "  });";
   html += "}";
+  
   html += "function controlDoor(state) {";
   html += "  fetch('/door/' + state).then(response => {";
   html += "    console.log('Door ' + state);";
   html += "  });";
   html += "}";
   html += "</script></head><body>";
-
+  
+  html += "<div class='container'>";
+  html += "<div class='tab'>";
+  html += "<button class='tablinks active' onclick='openTab(event, \"dashboard\")'>Dashboard</button>";
+  html += "<button class='tablinks' onclick='openTab(event, \"settings\")'>Settings</button>";
+  html += "</div>";
+  
+  // Dashboard Tab
+  html += "<div id='dashboard' class='tabcontent'>";
+  html += "<div class='card'>";
   html += "<h1>Smart Home Dashboard</h1>";
-  html += "<p>Temperature: " + temp + " C</p>";
-  html += "<p>Humidity: " + hum + " %</p>";
-  html += "<p>Light Level: " + String(lightLevel) + "</p>";
-  html += "<p>Motion Detected: " + String(motionDetected ? "Yes" : "No") + "</p>";
-  html += "<p>Distance: " + String(distance) + " cm</p>";
-  html += "<p>Raining: " + String(isRaining ? "Yes" : "No") + "</p>";
-
+  html += "<div class='grid'>";
+  html += "<div><div class='sensor-value'>" + temp + " °C</div><div class='sensor-label'>Temperature</div></div>";
+  html += "<div><div class='sensor-value'>" + hum + " %</div><div class='sensor-label'>Humidity</div></div>";
+  html += "<div><div class='sensor-value'>" + String(lightLevel) + "</div><div class='sensor-label'>Light Level</div></div>";
+  html += "<div><div class='sensor-value'>" + String(motionDetected ? "Yes" : "No") + "</div><div class='sensor-label'>Motion Detected</div></div>";
+  html += "<div><div class='sensor-value'>" + String(distance) + " cm</div><div class='sensor-label'>Distance</div></div>";
+  html += "<div><div class='sensor-value'>" + String(isRaining ? "Yes" : "No") + "</div><div class='sensor-label'>Raining</div></div>";
+  html += "</div></div>";
+  
+  html += "<div class='card'>";
   html += "<h2>Controls</h2>";
+  html += "<div style='display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;'>";
   html += "<button onclick=\"controlLight('on')\">Turn Light ON</button>";
-  html += "<button onclick=\"controlLight('off')\">Turn Light OFF</button><br>";
+  html += "<button onclick=\"controlLight('off')\">Turn Light OFF</button>";
   html += "<button onclick=\"controlDoor('open')\">Open Door</button>";
   html += "<button onclick=\"controlDoor('close')\">Close Door</button>";
-
-  html += "</body></html>";
+  html += "</div></div></div>";
+  
+  // Settings Tab
+  html += "<div id='settings' class='tabcontent'>";
+  html += "<div class='card'>";
+  html += "<h2>Automation Settings</h2>";
+  html += "<div class='settings-form'>";
+  html += "<div class='form-group'>";
+  html += "<label>Light Threshold (0-4095):</label>";
+  html += "<input type='number' id='lightThreshold' min='0' max='4095' value='500'>";
+  html += "<small>Light will turn on when level is below this value</small>";
+  html += "</div>";
+  html += "<div class='form-group'>";
+  html += "<label>Distance Threshold (cm):</label>";
+  html += "<input type='number' id='distanceThreshold' min='0' max='1000' value='300'>";
+  html += "<small>Buzzer will activate when motion is detected beyond this distance</small>";
+  html += "</div>";
+  html += "<button onclick='saveSettings()'>Save Settings</button>";
+  html += "</div></div></div>";
+  
+  html += "</div></body></html>";
 
   server.send(200, "text/html", html);
 }
@@ -180,13 +292,16 @@ void handleDoorClose() {
   server.send(200, "text/html", "<p>Door Closed. <a href='/'>Go Back</a></p>");
 }
 
-// Add these global variables at the top of your file
-unsigned long lastSensorRead = 0;
-unsigned long lastDoorOpen = 0;
-unsigned long lastBuzzerTone = 0;
-const unsigned long SENSOR_INTERVAL = 5000;    // 5 seconds between sensor readings
-const unsigned long DOOR_OPEN_TIME = 5000;     // 5 seconds for door to stay open
-const unsigned long BUZZER_DURATION = 1000;    // 1 second for buzzer
+void handleSaveSettings() {
+  if (server.hasArg("lightThreshold") && server.hasArg("distanceThreshold")) {
+    currentLightThreshold = server.arg("lightThreshold").toInt();
+    currentDistanceThreshold = server.arg("distanceThreshold").toInt();
+    server.send(200, "text/plain", "Settings saved");
+  } else {
+    server.send(400, "text/plain", "Missing parameters");
+  }
+}
+
 
 void loop() {
   server.handleClient();
@@ -233,7 +348,7 @@ void loop() {
     }
     
     // Automation Logic:
-    if (lightLevel < 1500) {
+    if (lightLevel < currentLightThreshold) {
       digitalWrite(LED_LIGHT, HIGH);
       digitalWrite(LED_LIGHT2, HIGH);
     } else {
@@ -242,7 +357,7 @@ void loop() {
     }
     
     // Door control with motion detection
-    if (motionDetected && distance > 0 && distance < 300 && (currentMillis - lastDoorOpen >= DOOR_OPEN_TIME)) {
+    if (motionDetected && distance > 0 && distance < currentDistanceThreshold && (currentMillis - lastDoorOpen >= DOOR_OPEN_TIME)) {
       digitalWrite(RELAY_DOOR, HIGH);
       lastDoorOpen = currentMillis;
     }

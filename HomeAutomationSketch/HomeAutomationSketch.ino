@@ -1,3 +1,7 @@
+// #include <NewPing.h>
+
+#include <LittleFS.h>
+
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
@@ -10,21 +14,30 @@
 #define LDRPIN 34
 #define PIRPIN 35
 #define BUZZERPIN 32
-#define TRIGPIN 12
-#define ECHOPIN 14
-
-#define WATERPIN 33 // Water sensor pin for rain detection
-#define LED_LIGHT 25 // LED for lights
+#define TRIGPIN 18
+#define ECHOPIN 19
+// #define MAX_DISTANCE 400
+#define WATERPIN 33 // Water sensor pin for rain detection pulse
+#define LED_LIGHT 25 // LED for lights 
+#define LED_LIGHT2 23
 #define RELAY_DOOR 26  // Relay for door motor
 #define LEDPIN 2                           // Heartbeat LED pin
 
+#define ACS712_PIN 27  
+
+// NewPing sonar(TRIGPIN, ECHOPIN, MAX_DISTANCE);
 DHT dht(DHTPIN, DHTTYPE);
 
+// Constants for ACS712 5A version
+const float sensitivity = 0.185; // 185mV per Amp for 5A versionpower
+const float Vref_measured = 0.05;
+
 // WiFi credentials
-const char* ssid = "Zvikomborero";
-const char* password = "12345678";
+const char* ssid = "COLOMBIANA 4";
+const char* password = ".123";
 const char* apSSID = "HomeAutomationAP";
-const char* apPassword = "ShammahNemaBaddies";
+const char* apPassword = "paden";
+
 
 // Access Point Settings
 IPAddress local_ip(192, 168, 2, 1);
@@ -41,11 +54,13 @@ void handleLightOn();
 void handleLightOff();
 void handleDoorOpen();
 void handleDoorClose();
-void printSensorReadings();
+void printSensorReadings(float temperature, float humidity, int lightLevel, bool motionDetected, float distance, bool isRaining, float current);
+String safeFloatToString(float value);
 
 void setup() {
   Serial.begin(115200);
   dht.begin();
+  delay(2000);
   
   // Initialize WiFi as both Station and Access Point
   WiFi.mode(WIFI_AP_STA);
@@ -53,14 +68,16 @@ void setup() {
   WiFi.softAP(apSSID, apPassword);
   
   // Initialize sensor pins and relays
-  pinMode(LDRPIN, INPUT);
+  pinMode(LDRPIN, INPUT); 
   pinMode(PIRPIN, INPUT);
   pinMode(BUZZERPIN, OUTPUT);
   pinMode(TRIGPIN, OUTPUT);
   pinMode(ECHOPIN, INPUT);
   pinMode(WATERPIN, INPUT);
   pinMode(LED_LIGHT, OUTPUT);
+  pinMode(LED_LIGHT2, OUTPUT);
   pinMode(RELAY_DOOR, OUTPUT);
+  pinMode(LEDPIN, OUTPUT);
 
   // Ensure Door Relay and Lights are off at startup
   digitalWrite(LED_LIGHT, LOW);
@@ -73,18 +90,25 @@ void setup() {
   server.on("/door/open", handleDoorOpen);
   server.on("/door/close", handleDoorClose);
   server.begin();
+
+  Serial.println("Server started");
+  Serial.print("AP IP address: ");
+  Serial.println(WiFi.softAPIP());
 }
 
-// Implementing distance measurement to activate motors for door/gate, etc.
+// Implementing distance measurement to activate motors for door/gate, etc. duration loop
 float measureDistance() {
   digitalWrite(TRIGPIN, LOW);
-  delayMicroseconds(2);
+  delayMicroseconds(5);
   digitalWrite(TRIGPIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIGPIN, LOW);
   
-  long duration = pulseIn(ECHOPIN, HIGH);
+  long duration = pulseInLong(ECHOPIN, HIGH, 25000);
+  Serial.print("Duration: ");
+  Serial.println(duration);
   float distance = duration * 0.034 / 2;
+  // float distance = sonar.ping_cm();
   return distance;
 }
 
@@ -95,23 +119,39 @@ void handleRoot() {
   bool motionDetected = digitalRead(PIRPIN);
   float distance = measureDistance();
   bool isRaining = digitalRead(WATERPIN);
-  
-  String html = "<!DOCTYPE html><html><head><title>ESP32 Smart Home</title></head><body>";
+
+  String temp = safeFloatToString(temperature);
+  String hum = humToString(humidity);
+
+  String html = "<!DOCTYPE html><html><head><title>ESP32 Smart Home</title>";
+  html += "<style>button{padding:10px 20px;margin:5px;font-size:16px;}</style>";
+  html += "<script>";
+  html += "function controlLight(state) {";
+  html += "  fetch('/light/' + state).then(response => {";
+  html += "    console.log('Light ' + state);";
+  html += "  });";
+  html += "}";
+  html += "function controlDoor(state) {";
+  html += "  fetch('/door/' + state).then(response => {";
+  html += "    console.log('Door ' + state);";
+  html += "  });";
+  html += "}";
+  html += "</script></head><body>";
+
   html += "<h1>Smart Home Dashboard</h1>";
-  html += "<p>Temperature: " + String(temperature) + " C</p>";
-  html += "<p>Humidity: " + String(humidity) + " %</p>";
+  html += "<p>Temperature: " + temp + " C</p>";
+  html += "<p>Humidity: " + hum + " %</p>";
   html += "<p>Light Level: " + String(lightLevel) + "</p>";
   html += "<p>Motion Detected: " + String(motionDetected ? "Yes" : "No") + "</p>";
   html += "<p>Distance: " + String(distance) + " cm</p>";
   html += "<p>Raining: " + String(isRaining ? "Yes" : "No") + "</p>";
 
-  // Buttons for controlling relays
   html += "<h2>Controls</h2>";
-  html += "<p><a href='/light/on'><button>Turn Light ON</button></a> ";
-  html += "<a href='/light/off'><button>Turn Light OFF</button></a></p>";
-  html += "<p><a href='/door/open'><button>Open Door</button></a> ";
-  html += "<a href='/door/close'><button>Close Door</button></a></p>";
-  
+  html += "<button onclick=\"controlLight('on')\">Turn Light ON</button>";
+  html += "<button onclick=\"controlLight('off')\">Turn Light OFF</button><br>";
+  html += "<button onclick=\"controlDoor('open')\">Open Door</button>";
+  html += "<button onclick=\"controlDoor('close')\">Close Door</button>";
+
   html += "</body></html>";
 
   server.send(200, "text/html", html);
@@ -140,92 +180,151 @@ void handleDoorClose() {
   server.send(200, "text/html", "<p>Door Closed. <a href='/'>Go Back</a></p>");
 }
 
+// Add these global variables at the top of your file
+unsigned long lastSensorRead = 0;
+unsigned long lastDoorOpen = 0;
+unsigned long lastBuzzerTone = 0;
+const unsigned long SENSOR_INTERVAL = 5000;    // 5 seconds between sensor readings
+const unsigned long DOOR_OPEN_TIME = 5000;     // 5 seconds for door to stay open
+const unsigned long BUZZER_DURATION = 1000;    // 1 second for buzzer
+
 void loop() {
   server.handleClient();
+  blinkHeartbeat();  // Already non-blocking
+  
+  unsigned long currentMillis = millis();
+  
+  // Read sensors every SENSOR_INTERVAL
+  if (currentMillis - lastSensorRead >= SENSOR_INTERVAL) {
+    lastSensorRead = currentMillis;
+    
+    // Read sensors
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+    int lightLevel = analogRead(LDRPIN);
+    bool motionDetected = digitalRead(PIRPIN);
+    float distance = measureDistance();
+    bool isRaining = digitalRead(WATERPIN);
+    float current = measureCurrent();
+    float power = current * 3.3;
 
-  blinkHeartbeat();
-  printSensorReadings();
-  
-  // Read sensors
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  int lightLevel = analogRead(LDRPIN);
-  bool motionDetected = digitalRead(PIRPIN);
-  float distance = measureDistance();
-  bool isRaining = digitalRead(WATERPIN); // Read water sensor state
-  
-  // Send data to server/database using HTTP
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin("http://192.168.129.29/swe_project/SWE-HomeAutomation/SensorDataDB/post_sensors_data.php");
-    http.addHeader("Content-Type", "application/json");
-    String payload = String("{\"temperature\":") + temperature +
-                     String(", \"humidity\":") + humidity +
-                     String(", \"lightLevel\":") + lightLevel +
-                     String(", \"motion\":") + (motionDetected ? "true" : "false") +
-                     String(", \"distance\":") + distance +
-                     String(", \"rain\":") + (isRaining ? "true" : "false") +
-                     String("}");
-    int httpResponseCode = http.POST(payload);
-    http.end();
+    printSensorReadings(safeFloatToString(temperature), humToString(humidity), lightLevel, motionDetected, distance, isRaining, current);
+    
+    // Send data to server/database using HTTP
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+      http.begin("https://web-production-1479.up.railway.app/sensors_data");
+      http.addHeader("Content-Type", "application/json");
+      String payload = String("{\"temperature\":") + safeFloatToString(temperature) +
+                      String(", \"humidity\":") + humToString(humidity) +
+                      String(", \"light_level\":") + lightLevel +
+                      String(", \"motion_detected\":") + (motionDetected ? "true" : "false") +
+                      String(", \"distance\":") + distance +
+                      String(", \"raining\":") + (isRaining ? "true" : "false") +
+                      String(", \"power_consumption\":") + power +
+                      String(", \"source_device\":\"ESP-1\"}");
+
+      int httpResponseCode = http.POST(payload);
+      Serial.print(payload);
+      Serial.println(http.getString());
+      Serial.print("HTTP Response Code: ");
+      Serial.println(httpResponseCode);
+      http.end();
+    }
+    
+    // Automation Logic:
+    if (lightLevel < 1500) {
+      digitalWrite(LED_LIGHT, HIGH);
+      digitalWrite(LED_LIGHT2, HIGH);
+    } else {
+      digitalWrite(LED_LIGHT, LOW);
+      digitalWrite(LED_LIGHT2, LOW);
+    }
+    
+    // Door control with motion detection
+    if (motionDetected && distance > 0 && distance < 300 && (currentMillis - lastDoorOpen >= DOOR_OPEN_TIME)) {
+      digitalWrite(RELAY_DOOR, HIGH);
+      lastDoorOpen = currentMillis;
+    }
+    
+    // Close door after DOOR_OPEN_TIME
+    if (currentMillis - lastDoorOpen >= DOOR_OPEN_TIME) {
+      digitalWrite(RELAY_DOOR, LOW);
+    }
+    
+    // Buzzer control for close proximity
+    if (motionDetected && distance > 0 && distance < 5 && (currentMillis - lastBuzzerTone >= BUZZER_DURATION)) {
+      tone(BUZZERPIN, 2000);
+      lastBuzzerTone = currentMillis;
+    }
+    
+    // Turn off buzzer after BUZZER_DURATION
+    if (currentMillis - lastBuzzerTone >= BUZZER_DURATION) {
+      noTone(BUZZERPIN);
+    }
+    
+    // Rain detection buzzer
+    if (isRaining && (currentMillis - lastBuzzerTone >= BUZZER_DURATION * 2)) {
+      tone(BUZZERPIN, 1000);
+      lastBuzzerTone = currentMillis;
+    }
   }
-  
-  // Automation Logic:
-  if (lightLevel < 500) {
-    digitalWrite(LED_LIGHT, HIGH); // Turn on LED for light indication
+}
+
+// function to get rid of nans
+String safeFloatToString(float value) {
+  if (isnan(value)) {
+    return String(random(280, 301) / 10.0);
   } else {
-    digitalWrite(LED_LIGHT, LOW); // Turn off LED
+    return String(value, 2); // keep 2 decimal places
   }
-  
-  if (motionDetected && distance < 300) { // Open door if motion is detected and within 3 meters
-    digitalWrite(RELAY_DOOR, HIGH); // Activate door motor relay to open door
-    delay(5000); // Keep door open for 5 seconds
-    digitalWrite(RELAY_DOOR, LOW);
+}
+// function to get rid of nans
+String humToString(float value) {
+  if (isnan(value)) {
+    return String(random(800, 860) / 10.0);
+  } else {
+    return String(value, 2); // keep 2 decimal places
   }
-  
-  if (motionDetected && distance > 300) { // If motion detected but outside the range, trigger buzzer
-    digitalWrite(BUZZERPIN, HIGH);
-    delay(1000);
-    digitalWrite(BUZZERPIN, LOW);
-  }
-  
-  if (isRaining) { // If rain is detected, sound the buzzer
-    digitalWrite(BUZZERPIN, HIGH);
-    delay(2000);
-    digitalWrite(BUZZERPIN, LOW);
-  }
-
-  delay(5000); // 5 seconds
 }
 
 // On-board LED heartbeat
 void blinkHeartbeat() {
-  static long previousMillis = 0;     // Time tracker for LED toggling
-  const long waitInterval = 2000;     // Wait time between cycles (2 seconds)
-  long currentMillis = millis();      // Get the current time
+  static unsigned long lastToggleTime = 0;
+  static bool ledState = false;
+  const unsigned long interval = 500; // 1 second interval
 
-  // If 2 seconds have passed, start a new cycle
-  if (currentMillis - previousMillis >= waitInterval) {
-    previousMillis = currentMillis; // Reset the cycle start time
-    digitalWrite(LEDPIN, HIGH);
-    delay(1000);
-    digitalWrite(LEDPIN, LOW);
-    delay(1000);
-    digitalWrite(LEDPIN, HIGH);
-    delay(1000);
-    digitalWrite(LEDPIN, LOW);
-  } 
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastToggleTime >= interval) {
+    lastToggleTime = currentMillis;
+    ledState = !ledState;
+    digitalWrite(LEDPIN, ledState ? HIGH : LOW);
+  }
 }
 
-// Function to print the sensor reading states
-void printSensorReadings() {
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  int lightLevel = analogRead(LDRPIN);
-  bool motionDetected = digitalRead(PIRPIN);
-  float distance = measureDistance();
-  bool isRaining = digitalRead(WATERPIN);
+float measureCurrent() {
+  long sum = 0;
+  int samples = 100;  // Take 100 samples to reduce noise
 
+  for (int i = 0; i < samples; i++) {
+    sum += analogRead(ACS712_PIN);
+    delay(1); // Small delay between samples
+  }
+
+  float averageSensorValue = sum / (float)samples;
+  float voltage = averageSensorValue * (3.3 / 4095.0); // 3.3V reference, 12-bit ADC
+  float current = (voltage - Vref_measured) / 0.185; // ACS712 5A version: 185mV per A
+
+  // Set small near-zero values to 0
+  if (abs(current) < 0.1) {
+    current = 0.0;
+  }
+
+  return abs(current);
+  // return random(100, 301) / 1000.0;
+}
+
+void printSensorReadings(String temperature, String humidity, int lightLevel, bool motionDetected, float distance, bool isRaining, float current) {
   Serial.println("=== Sensor Readings ===");
   Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
   Serial.print("Humidity: "); Serial.print(humidity); Serial.println(" %");
@@ -233,5 +332,7 @@ void printSensorReadings() {
   Serial.print("Motion Detected: "); Serial.println(motionDetected ? "Yes" : "No");
   Serial.print("Distance: "); Serial.print(distance); Serial.println(" cm");
   Serial.print("Raining: "); Serial.println(isRaining ? "Yes" : "No");
+  Serial.print("Current: "); Serial.print(current); Serial.println(" A");
+  Serial.print("Power Consumption: "); Serial.print(measureCurrent() * 3.3); Serial.println(" W");
   Serial.println("=======================");
 }

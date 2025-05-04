@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/AutomationPage.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
@@ -183,8 +183,7 @@ const AutomationPage = () => {
             try {
                 setLoading(true);
 
-                // For now, still use sample data for other entities
-                // Eventually you'll replace these with API calls too
+               
                 if (devices.length === 0) setDevices(sampleDevices);
                 if (rooms.length === 0) setRooms(sampleRooms);
                 if (deviceGroups.length === 0) setDeviceGroups(sampleGroups);

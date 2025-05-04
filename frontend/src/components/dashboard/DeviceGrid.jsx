@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSocket } from '../../context/SocketContext'; // Add this import
+import { useSocket } from '../../context/SocketContext'; 
 import { socketEvents } from '../../utils/socketEvents';
 import deviceService from '../../services/deviceService';
 
@@ -8,7 +8,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     const [error, setError] = useState(null);
     const [localDevices, setLocalDevices] = useState([]);
 
-    // Get socket from context
+   
     const { socket, isConnected } = useSocket();
 
     // Sample device data
@@ -60,49 +60,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
         }
     ];
 
-    // Hook to fallback and fetch devices
-    // useEffect(() => {
 
-    //     const fetchDevices = async () => {
-    //         try {
-    //             setLoading(true);
-
-    //             // Try to fetch from API first
-    //             try {
-    //                 let devicesData;
-    //                 if (selectedRoom !== 'All Rooms') {
-    //                     // If a specific room is selected, fetch devices for that room
-    //                     devicesData = await deviceService.getDevicesByRoom(selectedRoom);
-    //                 } else {
-    //                     // Otherwise fetch all devices
-    //                     devicesData = await deviceService.getDevices();
-    //                 }
-    //                 setLocalDevices(devicesData);
-    //                 setLoading(false);
-    //                 return; // Exit if API call successful
-    //             } catch (err) {
-    //                 console.log('API fetch failed, using fallback data');
-    //             }
-
-    //             // If API fails or devices prop is empty, use the sample data
-    //             if (devices.length > 0) {
-    //                 setLocalDevices(devices);
-    //             } else {
-    //                 // Use sample devices as fallback
-    //                 setLocalDevices(sampleDevices);
-    //                 console.log('Using sample device data');
-    //             }
-
-    //             setLoading(false);
-    //         } catch (error) {
-    //             console.error('Error in device setup:', error);
-    //             setError('Failed to load devices');
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchDevices();
-    // }, [devices, selectedRoom]);
     useEffect(() => {
         const fetchDevices = async () => {
             try {
@@ -223,7 +181,7 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
                     newState = { ...device.state, on: !device.state.on };
             }
 
-            // Optimistically update local state
+            // Update local state
             setLocalDevices(prevDevices =>
                 prevDevices.map(d =>
                     (d.id === deviceId || d._id === deviceId)

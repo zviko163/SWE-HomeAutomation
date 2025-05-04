@@ -28,24 +28,24 @@ const AutomationPage = () => {
             type: 'light',
             room: 'Living Room',
             status: 'online',
-            state: { on: true, brightness: 80 },
+            state: { on: false, brightness: 0 },
             icon: 'fa-lightbulb'
         },
         {
             id: 'thermostat-1',
-            name: 'Smart Thermostat',
+            name: 'Auto-Door',
             type: 'thermostat',
             room: 'Living Room',
             status: 'online',
-            state: { on: true, temperature: 22, mode: 'heat' },
-            icon: 'fa-temperature-high'
+            state: { on: false, temperature: 22, mode: 'heat' },
+            icon: 'fa-door-closed'
         },
         {
             id: 'speaker-1',
             name: 'Smart Speaker',
             type: 'speaker',
             room: 'Living Room',
-            status: 'online',
+            status: 'offline',
             state: { on: false, volume: 0 },
             icon: 'fa-volume-up'
         },
@@ -73,7 +73,7 @@ const AutomationPage = () => {
             type: 'door',
             room: 'Kitchen',
             status: 'online',
-            state: { locked: true },
+            state: { locked: false },
             icon: 'fa-door-closed'
         },
         {
@@ -342,7 +342,8 @@ const AutomationPage = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={device.state.on}
+                                                        checked={device.state.on || device.state.locked}
+                                                        onChange={() => handleDeviceToggle(device.id)}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>
@@ -455,6 +456,7 @@ const AutomationPage = () => {
                                                     <input
                                                         type="checkbox"
                                                         checked={device.state.on}
+                                                        onChange={() => toggleDevice(device.id)}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>
@@ -661,3 +663,328 @@ const AutomationPage = () => {
 };
 
 export default AutomationPage;
+
+
+    // Add this function after getDevicesByGroup
+    // Add this function to handle HTTP requests to the microcontroller
+    const sendDeviceCommand = async (deviceType, command) => {
+        try {
+            const response = await fetch(`http://192.168.4.1/${deviceType}/${command}`);
+            if (!response.ok) {
+                throw new Error(`Failed to send command to device: ${response.statusText}`);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error sending device command:', error);
+            return false;
+        }
+    };
+
+    // Update the handleDeviceToggle function
+    const handleDeviceToggle = async (deviceId) => {
+        try {
+            const device = devices.find(d => d.id === deviceId);
+            if (!device || device.status === 'offline') return;
+
+            // Determine the new state
+            const newState = device.type === 'door'
+                ? { ...device.state, locked: !device.state.locked }
+                : { ...device.state, on: !device.state.on };
+
+            // Send command to microcontroller based on device type
+            let success = false;
+            if (device.room === 'Living Room') {
+                const command = newState.on ? 'on' : 'off';
+                switch (device.type) {
+                    case 'light':
+                        success = await sendDeviceCommand('light', command);
+                        break;
+                    case 'thermostat':
+                        success = await sendDeviceCommand('door', command);
+                        break;
+                    default:
+                        success = true; // For other device types
+                }
+            } else {
+                success = true; // For devices in other rooms
+            }
+
+            if (success) {
+                // Update local state
+                setDevices(prevDevices =>
+                    prevDevices.map(d =>
+                        d.id === deviceId
+                            ? { ...d, state: newState }
+                            : d
+                    )
+                );
+
+                // Emit socket event if connected
+                if (socket && isConnected) {
+                    socket.emit(socketEvents.DEVICE_STATE_CHANGE, {
+                        deviceId,
+                        state: newState,
+                        room: device.room
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling device:', error);
+        }
+    };
+
+    // Use the same function for both rooms and groups
+    const toggleDevice = handleDeviceToggle;
+
+    // Update the device rendering in renderRoomsTab
+    const renderRoomsTab = () => {
+        return (
+            <div className="rooms-container">
+                <div className="section-header">
+                    <h2>Manage Rooms</h2>
+                    <button className="add-btn">
+                        <i className="fas fa-plus"></i>
+                        <span>Add Room</span>
+                    </button>
+                </div>
+
+                <div className="rooms-grid">
+                    {rooms.length === 0 ? (
+                        <div className="empty-state">
+                            <i className="fas fa-home"></i>
+                            <h3>No Rooms Yet</h3>
+                            <p>Create rooms to organize your devices</p>
+                        </div>
+                    ) : (
+                        rooms.map(room => (
+                            <div
+                                key={room.id}
+                                className={`room-card glass-card ${selectedRoom && selectedRoom.id === room.id ? 'selected' : ''}`}
+                                onClick={() => handleRoomClick(room)}
+                            >
+                                <div className="room-icon">
+                                    <i className={`fas ${room.icon}`}></i>
+                                </div>
+                                <div className="room-name">{room.name}</div>
+                                <div className="room-device-count">
+                                    <i className="fas fa-plug"></i> {room.deviceCount} devices
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {selectedRoom && (
+                    <div className="room-detail glass-card">
+                        <div className="detail-header">
+                            <h3>{selectedRoom.name}</h3>
+                            <div className="detail-actions">
+                                <button className="edit-btn">
+                                    <i className="fas fa-edit"></i>
+                                </button>
+                                <button className="delete-btn">
+                                    <i className="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="detail-content">
+                            <div className="detail-section">
+                                <h4>Devices in {selectedRoom.name}</h4>
+                                <div className="devices-list">
+                                    {getDevicesByRoom(selectedRoom.name).map(device => (
+                                        <div key={device.id} className="device-item">
+                                            <div className="device-icon">
+                                                <i className={`fas ${device.icon}`}></i>
+                                            </div>
+                                            <div className="device-info">
+                                                <div className="device-name">{device.name}</div>
+                                                <div className="device-status">
+                                                    <span className={`status-indicator ${device.status}`}></span>
+                                                    {device.status}
+                                                </div>
+                                            </div>
+                                            <div className="device-control">
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={device.state.on}
+                                                        onChange={() => toggleDevice(device.id)}
+                                                    />
+                                                    <span className="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {getDevicesByRoom(selectedRoom.name).length === 0 && (
+                                        <div className="no-devices-message">
+                                            No devices in this room yet
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button className="add-device-to-room-btn">
+                                <i className="fas fa-plus"></i>
+                                <span>Add Device to Room</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Update the device rendering in renderGroupsTab
+    const renderGroupsTab = () => {
+        return (
+            <div className="groups-container">
+                <div className="section-header">
+                    <h2>Device Groups</h2>
+                    <button className="add-btn">
+                        <i className="fas fa-plus"></i>
+                        <span>Create Group</span>
+                    </button>
+                </div>
+
+                <div className="groups-grid">
+                    {deviceGroups.length === 0 ? (
+                        <div className="empty-state">
+                            <i className="fas fa-object-group"></i>
+                            <h3>No Groups Yet</h3>
+                            <p>Create groups to control multiple devices at once</p>
+                        </div>
+                    ) : (
+                        deviceGroups.map(group => (
+                            <div
+                                key={group.id}
+                                className={`group-card glass-card ${selectedGroup && selectedGroup.id === group.id ? 'selected' : ''}`}
+                                onClick={() => handleGroupClick(group)}
+                                style={{ borderColor: group.color }}
+                            >
+                                <div className="group-icon" style={{ backgroundColor: group.color }}>
+                                    <i className={`fas ${group.icon}`}></i>
+                                </div>
+                                <div className="group-name">{group.name}</div>
+                                <div className="group-device-count">
+                                    <i className="fas fa-plug"></i> {group.deviceIds.length} devices
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {selectedGroup && (
+                    <div className="group-detail glass-card">
+                        <div className="detail-header" style={{ borderColor: selectedGroup.color }}>
+                            <h3>{selectedGroup.name}</h3>
+                            <div className="detail-actions">
+                                <button
+                                    className={`edit-btn ${editMode ? 'active' : ''}`}
+                                    onClick={() => setEditMode(!editMode)}
+                                >
+                                    <i className="fas fa-edit"></i>
+                                </button>
+                                <button className="delete-btn">
+                                    <i className="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="detail-content">
+                            <div className="detail-section">
+                                <div className="group-controls">
+                                    <button className="control-btn">
+                                        <i className="fas fa-power-off"></i>
+                                        <span>Turn All On</span>
+                                    </button>
+                                    <button className="control-btn off">
+                                        <i className="fas fa-power-off"></i>
+                                        <span>Turn All Off</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="detail-section">
+                                <h4>Devices in Group</h4>
+                                <div className="devices-list">
+                                    {getDevicesByGroup(selectedGroup.id).map(device => (
+                                        <div key={device.id} className="device-item">
+                                            <div className="device-icon">
+                                                <i className={`fas ${device.icon}`}></i>
+                                            </div>
+                                            <div className="device-info">
+                                                <div className="device-name">{device.name}</div>
+                                                <div className="device-room">{device.room}</div>
+                                            </div>
+                                            <div className="device-control">
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={device.state.on}
+                                                        onChange={() => toggleDevice(device.id)}
+                                                    />
+                                                    <span className="slider"></span>
+                                                </label>
+                                            </div>
+                                            {editMode && (
+                                                <button className="remove-device-btn">
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {editMode && (
+                                        <button className="add-device-btn">
+                                            <i className="fas fa-plus"></i>
+                                            <span>Add Device</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {editMode && (
+                                <div className="detail-actions-bottom">
+                                    <button className="btn-cancel">Cancel</button>
+                                    <button className="btn-save">Save Changes</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Update the device list rendering to include the toggle function
+    const renderDeviceList = (deviceList) => {
+        return (
+            <div className="devices-list">
+                {deviceList.map(device => (
+                    <div key={device.id} className="device-item">
+                        <div className="device-icon">
+                            <i className={`fas ${device.icon}`}></i>
+                        </div>
+                        <div className="device-info">
+                            <div className="device-name">{device.name}</div>
+                            <div className="device-room">{device.room}</div>
+                            <div className="device-status">
+                                <span className={`status-indicator ${device.status}`}></span>
+                                {device.status}
+                            </div>
+                        </div>
+                        <div className="device-control">
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={device.state.on}
+                                    onChange={() => toggleDevice(device.id)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };

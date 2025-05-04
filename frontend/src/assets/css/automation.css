@@ -859,3 +859,28 @@ input:checked+.slider:before {
         font-size: 0.7rem;
     }
 }
+
+.toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--gray-500);
+    transition: color 0.3s ease;
+}
+
+.toggle-btn.active {
+    color: var(--warning);
+}
+
+.toggle-btn:hover {
+    opacity: 0.8;
+}
+
+.toggle-btn i {
+    transition: transform 0.3s ease;
+}
+
+.toggle-btn.active i {
+    transform: scale(1.1);
+}

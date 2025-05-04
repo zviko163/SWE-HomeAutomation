@@ -197,41 +197,113 @@ const DeviceGrid = ({ selectedRoom, devices = [] }) => {
     // Toggle device state (this function should now emit an event through the API)
     const toggleDevice = async (deviceId) => {
         try {
-            // Find the device using either _id or id
-            const device = localDevices.find(d => d._id === deviceId || d.id === deviceId);
+            // Find the device
+            const device = localDevices.find(d => d.id === deviceId || d._id === deviceId);
             if (!device) return;
 
-            // Use the correct identifier for the API call
-            const correctId = device._id || device.id;
+            // Create new state based on device type
+            let newState;
+            switch (device.type) {
+                case 'light':
+                    newState = { ...device.state, on: !device.state.on };
+                    break;
+                case 'thermostat':
+                    newState = { ...device.state, on: !device.state.on };
+                    break;
+                case 'fan':
+                    newState = { ...device.state, on: !device.state.on };
+                    break;
+                case 'door':
+                    newState = { ...device.state, locked: !device.state.locked };
+                    break;
+                case 'speaker':
+                    newState = { ...device.state, on: !device.state.on };
+                    break;
+                default:
+                    newState = { ...device.state, on: !device.state.on };
+            }
 
-            // Determine the new state
-            const newState = { on: !device.state.on };
-
-            // Optimistically update UI
+            // Optimistically update local state
             setLocalDevices(prevDevices =>
                 prevDevices.map(d =>
-                    (d._id === deviceId || d.id === deviceId)
-                        ? { ...d, state: { ...d.state, on: newState.on } }
+                    (d.id === deviceId || d._id === deviceId)
+                        ? { ...d, state: newState }
                         : d
                 )
             );
 
-            // Call API to update device state
-            await deviceService.updateDeviceState(correctId, newState);
+            // Send update to backend
+            await deviceService.updateDeviceState(deviceId, newState);
 
+            // If socket is connected, emit the state change
+            if (socket && isConnected) {
+                socket.emit(socketEvents.DEVICE_STATE_CHANGE, {
+                    id: deviceId,
+                    state: newState,
+                    room: device.room
+                });
+            }
         } catch (error) {
             console.error('Error toggling device:', error);
-
-            // Revert optimistic update
+            // Revert the state change if there was an error
             setLocalDevices(prevDevices =>
                 prevDevices.map(d =>
-                    (d._id === deviceId || d.id === deviceId)
-                        ? { ...d, state: { ...d.state, on: !newState.on } }
+                    (d.id === deviceId || d._id === deviceId)
+                        ? { ...d, state: device.state }
                         : d
                 )
             );
         }
     };
+
+    // Render the device grid
+    return (
+        <div className="device-grid">
+            {loading ? (
+                <div className="loading-state">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            ) : error ? (
+                <div className="error-state">
+                    <i className="fas fa-exclamation-circle"></i>
+                    <p>{error}</p>
+                </div>
+            ) : localDevices.length === 0 ? (
+                <div className="no-devices-state">
+                    <i className="fas fa-plug"></i>
+                    <p>No devices found in this room</p>
+                </div>
+            ) : (
+                <div className="devices-grid">
+                    {localDevices.map(device => (
+                        <div key={device.id || device._id} className="device-card glass-card">
+                            <div className="device-icon">
+                                <i className={`fas ${device.icon}`}></i>
+                            </div>
+                            <div className="device-info">
+                                <h3>{device.name}</h3>
+                                <p className="device-room">{device.room}</p>
+                                <p className="device-status">
+                                    <span className={`status-indicator ${device.status}`}></span>
+                                    {device.status}
+                                </p>
+                            </div>
+                            <div className="device-controls">
+                                <button
+                                    className={`toggle-btn ${device.state.on || device.state.locked ? 'active' : ''}`}
+                                    onClick={() => toggleDevice(device.id || device._id)}
+                                >
+                                    <i className={`fas ${device.state.on || device.state.locked ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
     // Filter devices by room
     const filteredDevices = selectedRoom === 'All Rooms'

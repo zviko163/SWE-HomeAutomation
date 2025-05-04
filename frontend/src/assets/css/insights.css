@@ -57,11 +57,17 @@
     color: var(--gray-600);
     font-family: 'Space Mono', monospace;
     font-size: 0.9rem;
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+
+    color: var(--dark-sienna);
+    font-family: "Bricolage Grotesque",
+        sans-serif;
+    font-size: 0.8rem;
+
+/*     font-weight: 500; */
+/*     padding: 0.75rem 1.5rem; */
+/*     border-radius: 25px; */
+/*     cursor: pointer; */
+/*     transition: all 0.3s ease; */
 }
 
 .time-btn:hover {
@@ -221,7 +227,8 @@
     border-radius: 8px;
     padding: 0.75rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
 }
 
 .tooltip-time {

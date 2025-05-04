@@ -332,14 +332,22 @@ const AdminProfilePage = () => {
             {/* Header Section */}
             <header className="admin-header">
                 <div className="admin-header-content">
-                    <h1>Profile Settings</h1>
+                    <h1>Admin Profile</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>

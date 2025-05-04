@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import adminDeviceService from '../../services/adminDeviceService';
 
 const GlobalDeviceMonitor = () => {
     const { currentUser } = useAuth();
@@ -10,13 +11,55 @@ const GlobalDeviceMonitor = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Add this state for device details modal
+    const [selectedDevice, setSelectedDevice] = useState(null);
+
+    // Add this function to view device details
+    const viewDeviceDetails = (device) => {
+        setSelectedDevice(device);
+    };
+
+    // Close device details modal
+    const closeDeviceDetails = () => {
+        setSelectedDevice(null);
+    };
+
     useEffect(() => {
-        // Simulate fetching devices from backend
-        const fetchDevices = () => {
-            setTimeout(() => {
-                const sampleDevices = [
+        const fetchDevices = async () => {
+            try {
+                setLoading(true);
+                const response = await adminDeviceService.getAllDevices();
+
+                if (response && response.data) {
+                    setDevices(response.data);
+                } else {
+                    // Fallback to sample data if needed
+                    setDevices([
+                        {
+                            _id: 'd1',
+                            name: 'Living Room Thermostat',
+                            type: 'thermostat',
+                            household: 'Johnson Home',
+                            status: 'online',
+                            lastUpdated: '2025-04-29T14:30:00'
+                        },
+                        {
+                            _id: 'd2',
+                            name: 'Kitchen Smart Plug',
+                            type: 'plug',
+                            household: 'Smith Residence',
+                            status: 'offline',
+                            lastUpdated: '2025-04-28T22:15:00'
+                        }
+                    ]);
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+                // Fallback data
+                setDevices([
                     {
-                        id: 'd1',
+                        _id: 'd1',
                         name: 'Living Room Thermostat',
                         type: 'thermostat',
                         household: 'Johnson Home',
@@ -24,33 +67,16 @@ const GlobalDeviceMonitor = () => {
                         lastUpdated: '2025-04-29T14:30:00'
                     },
                     {
-                        id: 'd2',
+                        _id: 'd2',
                         name: 'Kitchen Smart Plug',
                         type: 'plug',
                         household: 'Smith Residence',
                         status: 'offline',
                         lastUpdated: '2025-04-28T22:15:00'
-                    },
-                    {
-                        id: 'd3',
-                        name: 'Bedroom Motion Sensor',
-                        type: 'sensor',
-                        household: 'Williams Apartment',
-                        status: 'online',
-                        lastUpdated: '2025-04-29T15:45:00'
-                    },
-                    {
-                        id: 'd4',
-                        name: 'Front Door Lock',
-                        type: 'lock',
-                        household: 'Davis House',
-                        status: 'online',
-                        lastUpdated: '2025-04-29T16:20:00'
                     }
-                ];
-                setDevices(sampleDevices);
+                ]);
                 setLoading(false);
-            }, 1000);
+            }
         };
 
         fetchDevices();
@@ -73,10 +99,33 @@ const GlobalDeviceMonitor = () => {
         const matchesStatus = filterStatus === 'all' || device.status === filterStatus;
         const matchesSearch =
             device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            device.household.toLowerCase().includes(searchTerm.toLowerCase());
+            (device.household && device.household.toLowerCase().includes(searchTerm.toLowerCase()));
 
         return matchesStatus && matchesSearch;
     });
+
+    const handleDeleteDevice = async (id) => {
+        // Confirm deletion
+        const confirmDelete = window.confirm('Are you sure you want to delete this device?');
+
+        if (confirmDelete) {
+            try {
+                setLoading(true);
+                await adminDeviceService.deleteDevice(id);
+
+                // Remove the device from state
+                setDevices(prevDevices => prevDevices.filter(device => device._id !== id));
+                setLoading(false);
+
+                // Show success message (you could add a toast notification here)
+                alert('Device deleted successfully');
+            } catch (error) {
+                console.error('Error deleting device:', error);
+                setLoading(false);
+                alert(`Error deleting device: ${error.message || 'Unknown error'}`);
+            }
+        }
+    };
 
     if (loading) {
         return (
@@ -96,14 +145,22 @@ const GlobalDeviceMonitor = () => {
             {/* Admin Header */}
             <header className="admin-header">
                 <div className="admin-header-content">
-                    <h1>Global Device Monitor</h1>
+                    <h1>Device Management</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -174,18 +231,19 @@ const GlobalDeviceMonitor = () => {
                                     <th>Household</th>
                                     <th>Status</th>
                                     <th>Last Updated</th>
+                                    <th>Actions</th> {/* Add this column */}
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredDevices.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="no-users">
+                                        <td colSpan="6" className="no-users"> {/* Update colspan to 6 */}
                                             No devices found matching your search criteria.
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredDevices.map(device => (
-                                        <tr key={device.id}>
+                                        <tr key={device._id}>
                                             <td>{device.name}</td>
                                             <td>{device.type}</td>
                                             <td>{device.household}</td>
@@ -195,6 +253,24 @@ const GlobalDeviceMonitor = () => {
                                                 </span>
                                             </td>
                                             <td>{formatDate(device.lastUpdated)}</td>
+                                            <td>
+                                                <div className="user-actions">
+                                                    <button
+                                                        className="action-btn edit-btn"
+                                                        onClick={() => viewDeviceDetails(device)}
+                                                        title="View Device"
+                                                    >
+                                                        <i className="fas fa-eye"></i>
+                                                    </button>
+                                                    <button
+                                                        className="action-btn delete-btn"
+                                                        onClick={() => handleDeleteDevice(device._id)}
+                                                        title="Delete Device"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -202,6 +278,97 @@ const GlobalDeviceMonitor = () => {
                         </table>
                     </div>
                 </section>
+
+                {/* Device Detail Modal */}
+                {selectedDevice && (
+                    <div className="modal-overlay">
+                        <div className="user-modal">
+                            <div className="modal-header">
+                                <h2>Device Details</h2>
+                                <button className="close-modal-btn" onClick={closeDeviceDetails}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div className="p-4">
+                                <div className="device-detail-container">
+                                    <div className="device-icon-large">
+                                        <i className={`fas ${selectedDevice.icon || 'fa-microchip'}`}></i>
+                                    </div>
+
+                                    <div className="detail-section">
+                                        <h4>Basic Information</h4>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Name:</div>
+                                            <div className="detail-value">{selectedDevice.name}</div>
+                                        </div>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Type:</div>
+                                            <div className="detail-value">{selectedDevice.type}</div>
+                                        </div>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Room:</div>
+                                            <div className="detail-value">{selectedDevice.room}</div>
+                                        </div>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Household:</div>
+                                            <div className="detail-value">{selectedDevice.household}</div>
+                                        </div>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Status:</div>
+                                            <div className="detail-value">
+                                                <span className={`status-badge ${selectedDevice.status}`}>
+                                                    {selectedDevice.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {selectedDevice.state && (
+                                        <div className="detail-section">
+                                            <h4>Device State</h4>
+                                            {Object.entries(selectedDevice.state).map(([key, value]) => (
+                                                <div className="detail-row" key={key}>
+                                                    <div className="detail-label">{key}:</div>
+                                                    <div className="detail-value">
+                                                        {typeof value === 'boolean'
+                                                            ? value ? 'True' : 'False'
+                                                            : value}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="detail-section">
+                                        <h4>Timestamps</h4>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Last Updated:</div>
+                                            <div className="detail-value">{formatDate(selectedDevice.lastUpdated)}</div>
+                                        </div>
+                                        <div className="detail-row">
+                                            <div className="detail-label">Created:</div>
+                                            <div className="detail-value">
+                                                {selectedDevice.createdAt ? formatDate(selectedDevice.createdAt) : 'Unknown'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="modal-actions mt-4">
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() => {
+                                                handleDeleteDevice(selectedDevice._id);
+                                                closeDeviceDetails();
+                                            }}
+                                        >
+                                            Delete Device
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Footer */}

@@ -1,108 +1,137 @@
-// frontend/src/components/admin/UserManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import userService from '../../services/userService';
 
 const UserManagement = () => {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [showUserModal, setShowUserModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
+    const [error, setError] = useState(null);
 
     // Form state for adding/editing users
     const [formData, setFormData] = useState({
-        name: '',
+        displayName: '',
         email: '',
+        password: '',
         role: 'homeowner',
         status: 'active'
     });
 
-    useEffect(() => {
-        // In a real app, you would fetch users from your backend/Firebase
-        // For demo purposes, we'll use sample data
-        const fetchUsers = () => {
-            // Simulate API call delay
-            setTimeout(() => {
-                const sampleUsers = [
-                    {
-                        id: '1',
-                        name: 'John Doe',
-                        email: 'john.doe@example.com',
-                        role: 'homeowner',
-                        status: 'active',
-                        lastLogin: '2025-04-25T14:30:00',
-                        devices: 5,
-                        createdAt: '2025-01-15T09:20:00'
-                    },
-                    {
-                        id: '2',
-                        name: 'Jane Smith',
-                        email: 'jane.smith@example.com',
-                        role: 'homeowner',
-                        status: 'active',
-                        lastLogin: '2025-04-28T16:45:00',
-                        devices: 8,
-                        createdAt: '2025-02-03T11:15:00'
-                    },
-                    {
-                        id: '3',
-                        name: 'Robert Johnson',
-                        email: 'robert.johnson@example.com',
-                        role: 'homeowner',
-                        status: 'inactive',
-                        lastLogin: '2025-03-10T08:20:00',
-                        devices: 2,
-                        createdAt: '2025-02-28T15:40:00'
-                    },
-                    {
-                        id: '4',
-                        name: 'Emily Williams',
-                        email: 'emily.williams@example.com',
-                        role: 'homeowner',
-                        status: 'active',
-                        lastLogin: '2025-04-29T09:15:00',
-                        devices: 4,
-                        createdAt: '2025-03-05T10:30:00'
-                    },
-                    {
-                        id: '5',
-                        name: 'System Administrator',
-                        email: 'admin@homebot.com',
-                        role: 'admin',
-                        status: 'active',
-                        lastLogin: '2025-04-29T10:30:00',
-                        devices: 0,
-                        createdAt: '2025-01-01T00:00:00'
-                    }
-                ];
-                setUsers(sampleUsers);
-                setLoading(false);
-            }, 1000);
-        };
+    // Function to fetch users
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
+            console.log('Starting to fetch users...');
+
+            try {
+                const response = await userService.getUsers();
+                console.log('Response received:', response);
+
+                if (response && response.data) {
+                    console.log(`Found ${response.data.length} users`);
+                    setUsers(response.data);
+                    setFilteredUsers(response.data);
+                } else {
+                    console.warn('No users found in response:', response);
+                    setUsers([]);
+                    setFilteredUsers([]);
+                }
+            } catch (apiError) {
+                console.error('API error:', apiError);
+                throw new Error('API connection failed');
+            }
+
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching users with details:', error);
+            setError('Failed to load users. Please try again.');
+
+            // Fallback to sample data in case of error
+            const sampleUsers = [
+                {
+                    uid: '1',
+                    displayName: 'John Doe',
+                    email: 'john.doe@example.com',
+                    role: 'homeowner',
+                    status: 'active',
+                    lastLogin: new Date().toISOString(),
+                    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                    uid: '2',
+                    displayName: 'Admin User',
+                    email: 'admin@example.com',
+                    role: 'admin',
+                    status: 'active',
+                    lastLogin: new Date().toISOString(),
+                    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+                }
+            ];
+
+            console.log('Using fallback sample data');
+            setUsers(sampleUsers);
+            setFilteredUsers(sampleUsers);
+            setLoading(false);
+        }
+    };
+
+    // Fetch users on component mount
+    useEffect(() => {
         fetchUsers();
     }, []);
 
-    // Format date to readable string
+    // Filter users when search term or role filter changes
+    useEffect(() => {
+        // Filter by name search
+        let results = users;
+
+        if (searchTerm) {
+            results = users.filter(user =>
+                user.displayName && user.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Then filter by role
+        if (filterRole !== 'all') {
+            results = results.filter(user => user.role === filterRole);
+        }
+
+        console.log(`Filtered to ${results.length} users based on search: "${searchTerm}" and role: "${filterRole}"`);
+        setFilteredUsers(results);
+    }, [searchTerm, filterRole, users]);
+
+    // Format date
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        if (!dateString) return 'Never';
+
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return 'Invalid date';
+        }
     };
 
     // Reset form data
     const resetForm = () => {
         setFormData({
-            name: '',
+            displayName: '',
             email: '',
+            password: '',
             role: 'homeowner',
             status: 'active'
         });
@@ -119,10 +148,11 @@ const UserManagement = () => {
     const handleEditUser = (user) => {
         setSelectedUser(user);
         setFormData({
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            status: user.status
+            displayName: user.displayName || '',
+            email: user.email || '',
+            password: '', // Don't set password when editing
+            role: user.role || 'homeowner',
+            status: user.status || 'active'
         });
         setShowUserModal(true);
     };
@@ -137,67 +167,64 @@ const UserManagement = () => {
     };
 
     // Handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // In a real app, you would save to backend/Firebase
-        if (selectedUser) {
-            // Update existing user
-            const updatedUsers = users.map(user =>
-                user.id === selectedUser.id ? { ...user, ...formData } : user
-            );
-            setUsers(updatedUsers);
-        } else {
-            // Add new user with a generated ID
-            const newUser = {
-                id: Date.now().toString(),
-                ...formData,
-                lastLogin: 'Never',
-                devices: 0,
-                createdAt: new Date().toISOString()
-            };
-            setUsers([...users, newUser]);
-        }
+        try {
+            if (selectedUser) {
+                // Update existing user
+                // Only include password if it was changed
+                const userData = { ...formData };
+                if (!userData.password) delete userData.password;
 
-        // Close modal and reset form
-        setShowUserModal(false);
-        resetForm();
+                console.log(`Updating user ${selectedUser.uid}`, userData);
+                await userService.updateUser(selectedUser.uid, userData);
+                console.log(`User ${selectedUser.uid} updated successfully`);
+            } else {
+                // Add new user
+                if (!formData.password) {
+                    alert('Password is required when creating a new user');
+                    return;
+                }
+
+                console.log('Creating new user', formData);
+                await userService.createUser(formData);
+                console.log('New user created successfully');
+            }
+
+            // Close modal and refresh users
+            setShowUserModal(false);
+            resetForm();
+            fetchUsers();
+        } catch (error) {
+            console.error('Error saving user:', error);
+            alert(`Error ${selectedUser ? 'updating' : 'creating'} user: ${error.message}`);
+        }
     };
 
     // Handle user deletion
-    const handleDeleteUser = (userId) => {
-        // In a real app, you would delete from backend/Firebase
+    const handleDeleteUser = async (uid) => {
+        // Don't allow deleting the current admin user
+        if (uid === currentUser?.uid) {
+            alert("You cannot delete your own account");
+            return;
+        }
+
+        // Confirm deletion
         const confirmDelete = window.confirm('Are you sure you want to delete this user?');
 
         if (confirmDelete) {
-            const updatedUsers = users.filter(user => user.id !== userId);
-            setUsers(updatedUsers);
+            try {
+                console.log(`Deleting user ${uid}`);
+                await userService.deleteUser(uid);
+                console.log(`User ${uid} deleted successfully`);
+                fetchUsers(); // Refresh the user list
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert(`Error deleting user: ${error.message}`);
+            }
         }
     };
-
-    // Filter users based on search term and role filter
-    const filteredUsers = users.filter(user => {
-        const matchesSearch =
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesRole = filterRole === 'all' || user.role === filterRole;
-
-        return matchesSearch && matchesRole;
-    });
-
-    if (loading) {
-        return (
-            <div className="admin-container">
-                <div className="admin-loading">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p>Loading user data...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="admin-container">
@@ -206,12 +233,20 @@ const UserManagement = () => {
                 <div className="admin-header-content">
                     <h1>User Management</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -253,7 +288,7 @@ const UserManagement = () => {
                             <i className="fas fa-search search-icon"></i>
                             <input
                                 type="text"
-                                placeholder="Search users by name or email"
+                                placeholder="Search users by name"
                                 className="search-input"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -277,68 +312,79 @@ const UserManagement = () => {
 
                     {/* Users Table */}
                     <div className="users-table-container">
-                        <table className="users-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Last Login</th>
-                                    <th>Devices</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.length === 0 ? (
+                        {loading ? (
+                            <div className="text-center p-4">
+                                <div className="spinner-border" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                                <p className="mt-2">Loading users...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="alert alert-danger" role="alert">
+                                {error}
+                            </div>
+                        ) : (
+                            <table className="users-table">
+                                <thead>
                                     <tr>
-                                        <td colSpan="8" className="no-users">
-                                            No users found matching your search criteria.
-                                        </td>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Last Login</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ) : (
-                                    filteredUsers.map(user => (
-                                        <tr key={user.id}>
-                                            <td>{user.name}</td>
-                                            <td>{user.email}</td>
-                                            <td>
-                                                <span className={`role-badge ${user.role}`}>
-                                                    {user.role === 'admin' ? 'Super Admin' : 'Homeowner'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`status-badge ${user.status}`}>
-                                                    {user.status}
-                                                </span>
-                                            </td>
-                                            <td>{user.lastLogin === 'Never' ? 'Never' : formatDate(user.lastLogin)}</td>
-                                            <td>{user.devices}</td>
-                                            <td>{formatDate(user.createdAt)}</td>
-                                            <td>
-                                                <div className="user-actions">
-                                                    <button
-                                                        className="action-btn edit-btn"
-                                                        onClick={() => handleEditUser(user)}
-                                                        title="Edit User"
-                                                    >
-                                                        <i className="fas fa-edit"></i>
-                                                    </button>
-                                                    <button
-                                                        className="action-btn delete-btn"
-                                                        onClick={() => handleDeleteUser(user.id)}
-                                                        title="Delete User"
-                                                        disabled={user.role === 'admin'} // Prevent deleting admin users
-                                                    >
-                                                        <i className="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
+                                </thead>
+                                <tbody>
+                                    {filteredUsers.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="no-users">
+                                                No users found matching your search criteria.
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        filteredUsers.map(user => (
+                                            <tr key={user.uid}>
+                                                <td>{user.displayName || 'No Name'}</td>
+                                                <td>{user.email}</td>
+                                                <td>
+                                                    <span className={`role-badge ${user.role}`}>
+                                                        {user.role === 'admin' ? 'Super Admin' : 'Homeowner'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className={`status-badge ${user.status}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </td>
+                                                <td>{formatDate(user.lastLogin)}</td>
+                                                <td>{formatDate(user.createdAt)}</td>
+                                                <td>
+                                                    <div className="user-actions">
+                                                        <button
+                                                            className="action-btn edit-btn"
+                                                            onClick={() => handleEditUser(user)}
+                                                            title="Edit User"
+                                                        >
+                                                            <i className="fas fa-edit"></i>
+                                                        </button>
+                                                        <button
+                                                            className="action-btn delete-btn"
+                                                            onClick={() => handleDeleteUser(user.uid)}
+                                                            title="Delete User"
+                                                            disabled={user.uid === currentUser?.uid} // Prevent deleting current user
+                                                        >
+                                                            <i className="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 </section>
             </main>
@@ -356,15 +402,14 @@ const UserManagement = () => {
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
-                                <label htmlFor="name">Full Name</label>
+                                <label htmlFor="displayName">Full Name</label>
                                 <input
                                     type="text"
-                                    id="name"
-                                    name="name"
-                                    value={formData.name}
+                                    id="displayName"
+                                    name="displayName"
+                                    value={formData.displayName}
                                     onChange={handleInputChange}
                                     placeholder="Enter full name"
-                                    required
                                 />
                             </div>
 
@@ -378,6 +423,21 @@ const UserManagement = () => {
                                     onChange={handleInputChange}
                                     placeholder="Enter email address"
                                     required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="password">
+                                    {selectedUser ? 'New Password (leave blank to keep current)' : 'Password'}
+                                </label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    placeholder={selectedUser ? 'Enter new password' : 'Enter password'}
+                                    required={!selectedUser} // Only required for new users
                                 />
                             </div>
 

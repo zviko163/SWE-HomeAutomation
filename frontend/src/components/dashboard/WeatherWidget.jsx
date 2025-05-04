@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/WeatherWidget.jsx
+
 import React, { useState, useEffect } from 'react';
 
 const WeatherWidget = () => {
@@ -20,7 +20,7 @@ const WeatherWidget = () => {
                 // Set to loading state
                 setWeather(prev => ({ ...prev, loading: true }));
 
-                // API key and default location (this would ideally come from user settings)
+                // API key and default location 
                 const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
                 const latitude = 5.6037; // Default to Accra, Ghana
                 const longitude = -0.1870;
@@ -36,8 +36,8 @@ const WeatherWidget = () => {
 
                 const data = await response.json();
 
-                // Get location name (in a real app, you might use reverse geocoding or let users name locations)
-                // For now, using timezone as a fallback location name
+                // Get location name 
+             
                 const locationName = data.timezone.split('/').pop().replace('_', ' ');
 
                 // Map icon from API to Font Awesome

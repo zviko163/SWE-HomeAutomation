@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/DeviceAddModal.jsx
+
 import React, { useState, useEffect } from 'react';
 import deviceService from '../../services/deviceService';
 import roomService from '../../services/roomService';

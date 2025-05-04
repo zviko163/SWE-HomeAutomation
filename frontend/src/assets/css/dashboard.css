@@ -331,3 +331,7 @@ input:checked+.slider:before {
     overflow-x: hidden;
     /* Prevent horizontal scrollbar */
 }
+
+.dashboard-background {
+    background-image: url('../images/dashboard-bg.jpg');
+}

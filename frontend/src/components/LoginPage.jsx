@@ -8,6 +8,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup,
 } from 'firebase/auth';
+import googleIcon from '../assets/images/google-icon.svg';
 
 const LoginPage = () => {
     // Tab state - 'homeowner' or 'admin'
@@ -373,7 +374,7 @@ const LoginPage = () => {
                                                     onClick={handleGoogleLogin}
                                                     disabled={isLoading}
                                                 >
-                                                    <img src="/src/assets/images/google-icon.svg" alt="Google" width="18" height="18" className="me-2" />
+                                                    <img src={googleIcon} alt="Google" width="18" height="18" className="me-2" />
                                                     Sign in with Google
                                                 </button>
                                             </div>

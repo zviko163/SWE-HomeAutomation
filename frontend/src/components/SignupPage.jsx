@@ -8,6 +8,7 @@ import {
     signInWithPopup,
     updateProfile
 } from 'firebase/auth';
+import googleIcon from '../assets/images/google-icon.svg';
 
 
 
@@ -344,7 +345,7 @@ const SignupPage = () => {
                                                 onClick={handleGoogleSignup}
                                                 disabled={isLoading}
                                             >
-                                                <img src="/src/assets/images/google-icon.svg" alt="Google" width="18" height="18" className="me-2" />
+                                                <img src={googleIcon} alt="Google" width="18" height="18" className="me-2" />
                                                 Sign up with Google
                                             </button>
                                         </div>

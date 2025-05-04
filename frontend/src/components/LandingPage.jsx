@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/landing-page.css';
-
+import heroImage from '../assets/images/smart-home-hero.jpeg';
+import howItWorks from '../assets/images/how-it-works.jpg';
+import dashImg from '../assets/images/dash-image.jpg';
+import testimonial from '../assets/images/testimonial-1.jpg';
 function LandingPage() {
     return (
         <>
@@ -61,7 +64,7 @@ function LandingPage() {
                                 justifyContent: "center"
                             }}>
                                 <img
-                                    src="public/smart-home-hero.jpeg"
+                                    src={heroImage}
                                     alt="Home Bot Dashboard"
                                     className="img-fluid"
                                     style={{
@@ -151,7 +154,7 @@ function LandingPage() {
                     </div>
                     <div className="row align-items-center">
                         <div className="col-lg-6 mb-4 mb-lg-0">
-                            <img src="src/assets/images/how-it-works.jpg" alt="How Home Bot Works" className="img-fluid rounded glass" />
+                            <img src={howItWorks} alt="How Home Bot Works" className="img-fluid rounded glass" />
                         </div>
                         <div className="col-lg-6">
                             <div className="steps">
@@ -201,7 +204,7 @@ function LandingPage() {
                     <div className="row">
                         <div className="col-12">
                             <div className="dashboard-preview glass p-3 p-md-5">
-                                <img src="src/assets/images/dashboard-preview.png" alt="Home Bot Dashboard" className="img-fluid w-100 rounded" />
+                                <img src={dashImg} alt="Home Bot Dashboard" className="img-fluid w-100 rounded" />
                             </div>
                         </div>
                     </div>
@@ -253,7 +256,7 @@ function LandingPage() {
                                     <div className="carousel-item active">
                                         <div className="testimonial-item glass p-4 p-md-5 text-center">
                                             <div className="testimonial-img mb-4">
-                                                <img src="src/assets/images/testimonial-1.jpg" alt="User Testimonial" className="rounded-circle" />
+                                                <img src={testimonial} alt="User Testimonial" className="rounded-circle" />
                                             </div>
                                             <p className="fs-5 mb-4">"Home Bot has completely transformed how I interact with my house. The
                                                 temperature predictions saved me over 20% on my energy bill last month!"</p>

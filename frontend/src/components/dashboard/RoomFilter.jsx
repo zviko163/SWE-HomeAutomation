@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/RoomFilter.jsx
+
 import React, { useState, useEffect } from 'react'; // Add useState and useEffect imports
 import roomService from '../../services/roomService';
 import RoomManageModal from './RoomManageModal';
@@ -10,7 +10,7 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRoomToEdit, setSelectedRoomToEdit] = useState(null);
 
-    // Make sure we always have the "All Rooms" option
+  
     const allRoomsOption = { id: 'all', name: 'All Rooms' };
 
     const fetchRooms = async () => {
@@ -53,7 +53,7 @@ const RoomFilter = ({ selectedRoom, onRoomChange }) => {
         fetchRooms();
     }, []);
 
-    // Add this function to handle room changes from the modal
+    //Handle room changes from the modal
     const handleRoomUpdated = (room, isDeleted = false) => {
         if (isDeleted) {
             // Remove the deleted room from the list

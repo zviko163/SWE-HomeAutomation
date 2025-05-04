@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/RoomManageModal.jsx
+
 import React, { useState, useEffect } from 'react';
 import roomService from '../../services/roomService';
 import deviceService from '../../services/deviceService';

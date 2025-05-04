@@ -61,7 +61,7 @@ function LandingPage() {
                                 justifyContent: "center"
                             }}>
                                 <img
-                                    src="src/assets/images/smart-home-hero.jpeg"
+                                    src="public/smart-home-hero.jpeg"
                                     alt="Home Bot Dashboard"
                                     className="img-fluid"
                                     style={{

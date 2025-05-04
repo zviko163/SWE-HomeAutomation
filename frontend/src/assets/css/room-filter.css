@@ -207,7 +207,8 @@
     color: var(--danger);
     border: none;
     border-radius: 25px;
-    font-family: 'Space Mono', monospace;
+    font-family: "Bricolage Grotesque",
+        sans-serif;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;

@@ -13,6 +13,8 @@ const deviceRoutes = require('./routes/deviceRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -50,7 +52,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'https://your-frontend-domain.vercel.app'],
     credentials: true
 }));
 
@@ -78,6 +80,8 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Socket.io connection handlers
 io.on('connection', (socket) => {

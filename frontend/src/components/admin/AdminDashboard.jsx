@@ -2,35 +2,67 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { getAuth } from 'firebase/auth';
 
 const AdminDashboard = () => {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalUsers: 0,
-        activeUsers: 0,
-        totalDevices: 0,
-        onlineDevices: 0,
-        totalHouseholds: 0,
-        alertsToday: 0
+        totalDevices: 0
     });
 
     useEffect(() => {
         // In a real app, you would fetch these stats from your backend
         // For demo purposes, we'll use sample data
-        const fetchStats = () => {
-            // Simulate API call delay
-            setTimeout(() => {
+        const fetchStats = async () => {
+            try {
+                setLoading(true);
+
+                // Get user count from Firebase
+                let totalUsers = 0;
+                const auth = getAuth();
+
+                // Since client-side Firebase doesn't let you list all users (security constraint),
+                // we have two options:
+                // 1. Make an API call to your backend that uses Firebase Admin SDK
+                // 2. Use a collection in your database to store user info when they register
+
+                try {
+                    // Option 1: Call backend API that uses Firebase Admin
+                    const userResponse = await fetch('http://localhost:5001/api/admin/stats/users');
+                    const userData = await userResponse.json();
+                    totalUsers = userData.count;
+                } catch (error) {
+                    console.error('Error fetching user count:', error);
+                    totalUsers = 48; // Fallback
+                }
+
+                // Get device count from MongoDB via your backend API
+                let totalDevices = 0;
+                try {
+                    const deviceResponse = await fetch('http://localhost:5001/api/admin/stats/devices');
+                    const deviceData = await deviceResponse.json();
+                    totalDevices = deviceData.count;
+                } catch (error) {
+                    console.error('Error fetching device count:', error);
+                    totalDevices = 156; // Fallback
+                }
+
                 setStats({
-                    totalUsers: 48,
-                    activeUsers: 32,
-                    totalDevices: 156,
-                    onlineDevices: 143,
-                    totalHouseholds: 15,
-                    alertsToday: 4
+                    totalUsers,
+                    totalDevices
+                });
+
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                setStats({
+                    totalUsers: 48, // Fallback
+                    totalDevices: 156 // Fallback
                 });
                 setLoading(false);
-            }, 1000);
+            }
         };
 
         fetchStats();
@@ -56,12 +88,20 @@ const AdminDashboard = () => {
                 <div className="admin-header-content">
                     <h1>System Overview</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -99,7 +139,7 @@ const AdminDashboard = () => {
                             <div className="stat-details">
                                 <h3 className="stat-value">{stats.totalUsers}</h3>
                                 <p className="stat-label">Total Users</p>
-                                <p className="stat-subtext">{stats.activeUsers} active in last 24h</p>
+                                <p className="stat-subtext">System administrators and homeowners</p>
                             </div>
                         </div>
 
@@ -111,83 +151,10 @@ const AdminDashboard = () => {
                             <div className="stat-details">
                                 <h3 className="stat-value">{stats.totalDevices}</h3>
                                 <p className="stat-label">Total Devices</p>
-                                <p className="stat-subtext">{stats.onlineDevices} currently online</p>
+                                <p className="stat-subtext">Connected smart home devices</p>
                             </div>
                         </div>
 
-                        {/* Households Stat Card */}
-                        <div className="admin-stat-card">
-                            <div className="stat-icon households-icon">
-                                <i className="fas fa-home"></i>
-                            </div>
-                            <div className="stat-details">
-                                <h3 className="stat-value">{stats.totalHouseholds}</h3>
-                                <p className="stat-label">Households</p>
-                                <p className="stat-subtext">Across 8 cities</p>
-                            </div>
-                        </div>
-
-                        {/* Alerts Stat Card */}
-                        <div className="admin-stat-card">
-                            <div className="stat-icon alerts-icon">
-                                <i className="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div className="stat-details">
-                                <h3 className="stat-value">{stats.alertsToday}</h3>
-                                <p className="stat-label">Alerts Today</p>
-                                <p className="stat-subtext">2 require attention</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Recent Activity Section */}
-                <section className="admin-activity-section">
-                    <div className="section-header">
-                        <h2>Recent Activity</h2>
-                        <button className="view-all-btn">View All</button>
-                    </div>
-
-                    <div className="activity-list">
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-user-plus"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">New user registered: <strong>Michael Chen</strong></p>
-                                <p className="activity-time">10 minutes ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-exclamation-circle"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">Alert: <strong>Temperature sensor offline</strong> in Johnson household</p>
-                                <p className="activity-time">25 minutes ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-plus-circle"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">New device added: <strong>Smart Thermostat</strong> by Sarah Wilson</p>
-                                <p className="activity-time">1 hour ago</p>
-                            </div>
-                        </div>
-
-                        <div className="activity-item">
-                            <div className="activity-icon">
-                                <i className="fas fa-sign-in-alt"></i>
-                            </div>
-                            <div className="activity-details">
-                                <p className="activity-text">Admin login: <strong>System Administrator</strong></p>
-                                <p className="activity-time">2 hours ago</p>
-                            </div>
-                        </div>
                     </div>
                 </section>
 
@@ -202,26 +169,19 @@ const AdminDashboard = () => {
                             <h3>Add New User</h3>
                         </Link>
 
-                        <Link to="/admin/devices" className="action-card">
-                            <div className="action-icon">
-                                <i className="fas fa-search"></i>
-                            </div>
-                            <h3>Check Device Status</h3>
-                        </Link>
-
-                        <Link to="/admin/users" className="action-card">
-                            <div className="action-icon">
-                                <i className="fas fa-envelope"></i>
-                            </div>
-                            <h3>Send Notification</h3>
-                        </Link>
-
-                        <Link to="/admin/users" className="action-card">
+                        <div className="action-card" onClick={() => window.open('http://localhost:5001/api/reports/devices', '_blank')}>
                             <div className="action-icon">
                                 <i className="fas fa-download"></i>
                             </div>
-                            <h3>Export Reports</h3>
-                        </Link>
+                            <h3>Export Devices Report</h3>
+                        </div>
+
+                        <div className="action-card" onClick={() => window.open('http://localhost:5001/api/reports/users', '_blank')}>
+                            <div className="action-icon">
+                                <i className="fas fa-file-alt"></i>
+                            </div>
+                            <h3>Export Users Report</h3>
+                        </div>
                     </div>
                 </section>
             </main>

@@ -22,8 +22,8 @@ const WeatherWidget = () => {
 
                 // API key and default location (this would ideally come from user settings)
                 const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-                const latitude = 30.2672; // Default to Austin, TX
-                const longitude = -97.7431;
+                const latitude = 5.6037; // Default to Accra, Ghana
+                const longitude = -0.1870;
 
                 // Fetch weather data from Pirate Weather API
                 const response = await fetch(

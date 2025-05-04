@@ -8,10 +8,12 @@
     --white: #ffffff;
     --glass-bg: rgba(255, 255, 255, 0.15);
     --glass-border: rgba(255, 255, 255, 0.2);
+    --heading-font: "Bricolage Grotesque",
+        sans-serif;
 }
 
 body {
-    font-family: 'Space Mono', monospace;
+    font-family: var(--heading-font);
     background-color: var(--light-bg);
     color: var(--dark-sienna);
     overflow-x: hidden;
@@ -100,6 +102,7 @@ body {
     font-weight: 500;
     margin: 0 0.5rem;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .nav-link:hover {
@@ -348,4 +351,74 @@ body {
 
 section {
     padding: 3rem;
+}
+
+#hero .row .col-lg-6:first-child {
+    padding-top: 0;
+    /* Adjust this value to move content higher */
+}
+
+/* Make the hero section take less vertical space */
+#hero {
+    padding-top: 0;
+    /* Add top padding to push content up */
+}
+
+/* If needed, adjust the vertical alignment */
+#hero .row {
+    align-items: flex-start;
+    /* Change from center to start */
+    padding-top: 0;
+    /* Add space from the top */
+}
+
+/* Make the font size slightly smaller if needed */
+#hero h1.display-3 {
+    font-size: 2.75rem;
+    /* Adjust as needed */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.hero-img-container {
+    max-height: calc(100vh - 100px) !important;
+    /* Subtract nav height + some padding */
+    height: auto !important;
+}
+
+.hero-img-container img {
+    max-height: calc(100vh - 140px) !important;
+    /* Slightly less than container */
+    object-fit: cover;
+}
+
+#hero {
+    min-height: auto;
+    /* Override the 100vh min-height */
+    height: auto;
+}
+
+#hero .row {
+    align-items: center;
+}
+
+@media (max-width: 991.98px) {
+    .hero-img-container {
+        max-height: 50vh !important;
+        /* Even smaller on mobile */
+    }
+
+    .hero-img-container img {
+        max-height: 48vh !important;
+    }
 }

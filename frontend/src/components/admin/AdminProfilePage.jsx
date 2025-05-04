@@ -8,7 +8,9 @@ import {
     updateEmail,
     updatePassword,
     reauthenticateWithCredential,
+    reauthenticateWithPopup,
     EmailAuthProvider,
+    GoogleAuthProvider,
     signOut
 } from 'firebase/auth';
 
@@ -31,12 +33,26 @@ const AdminProfilePage = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
+
     // Password form data
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
     });
+
+    // Add near the top of the AdminProfilePage component
+    const isGoogleUser = () => {
+        if (!currentUser) return false;
+
+        // Check if the user's providerData includes Google
+        return currentUser.providerData.some(
+            provider => provider.providerId === 'google.com'
+        );
+    };
 
     // Validation errors
     const [errors, setErrors] = useState({});
@@ -68,6 +84,58 @@ const AdminProfilePage = () => {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleDeleteAccount = () => {
+        setShowDeleteConfirmation(true);
+    };
+
+    // Add the confirmDeleteAccount function
+    const confirmDeleteAccount = async () => {
+        try {
+            setDeleteLoading(true);
+
+            // Re-authenticate based on provider
+            if (isGoogleUser()) {
+                // For Google users, create Google auth provider
+                const provider = new GoogleAuthProvider();
+                await reauthenticateWithPopup(currentUser, provider);
+            } else {
+                // For email/password users, reauthenticate with password
+                if (!deleteConfirmPassword) {
+                    setErrorMessage('Please enter your password to confirm deletion');
+                    setDeleteLoading(false);
+                    return;
+                }
+
+                const credential = EmailAuthProvider.credential(
+                    currentUser.email,
+                    deleteConfirmPassword
+                );
+
+                await reauthenticateWithCredential(currentUser, credential);
+            }
+
+            // Now that user is re-authenticated, delete the account
+            await currentUser.delete();
+
+            // Navigate to the login page
+            navigate('/login');
+        } catch (error) {
+            console.error('Error deleting account:', error);
+
+            if (error.code === 'auth/wrong-password') {
+                setErrorMessage('Incorrect password. Please try again.');
+            } else if (error.code === 'auth/too-many-requests') {
+                setErrorMessage('Too many unsuccessful attempts. Please try again later.');
+            } else if (error.code === 'auth/network-request-failed') {
+                setErrorMessage('Network error. Please check your connection and try again.');
+            } else {
+                setErrorMessage(error.message || 'Failed to delete account. Please try again.');
+            }
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     // Validate profile form
@@ -264,14 +332,22 @@ const AdminProfilePage = () => {
             {/* Header Section */}
             <header className="admin-header">
                 <div className="admin-header-content">
-                    <h1>Profile Settings</h1>
+                    <h1>Admin Profile</h1>
                     <div className="admin-user-info">
-                        <span>Welcome, <strong>Admin</strong></span>
-                        <img
-                            src={currentUser?.photoURL || '/src/assets/images/default-avatar.png'}
-                            alt="Admin"
-                            className="admin-avatar"
-                        />
+                        <span>Welcome, <strong>{currentUser?.displayName || 'Admin'}</strong></span>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Admin"
+                                className="admin-avatar"
+                            />
+                        ) : (
+                            <div className="admin-avatar admin-initials">
+                                {currentUser?.displayName
+                                    ? currentUser.displayName.charAt(0).toUpperCase()
+                                    : 'A'}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -435,7 +511,7 @@ const AdminProfilePage = () => {
                 <section className="profile-section glass-card">
                     <div className="section-header">
                         <h2>Security</h2>
-                        {!isChangingPassword && (
+                        {!isGoogleUser() && !isChangingPassword && (
                             <button
                                 className="edit-button"
                                 onClick={() => setIsChangingPassword(true)}
@@ -455,12 +531,10 @@ const AdminProfilePage = () => {
                                         id="currentPassword"
                                         name="currentPassword"
                                         value={passwordData.currentPassword}
-
-/>
-
-                                    {errors.currentPassword && (
-                                        <div className="error-message">{errors.currentPassword}</div>
-                                    )}
+                                        onChange={handlePasswordChange}
+                                        className={errors.currentPassword ? 'error' : ''}
+                                    />
+                                    {errors.currentPassword && <div className="error-message">{errors.currentPassword}</div>}
                                 </div>
 
                                 <div className="form-group">
@@ -473,9 +547,7 @@ const AdminProfilePage = () => {
                                         onChange={handlePasswordChange}
                                         className={errors.newPassword ? 'error' : ''}
                                     />
-                                    {errors.newPassword && (
-                                        <div className="error-message">{errors.newPassword}</div>
-                                    )}
+                                    {errors.newPassword && <div className="error-message">{errors.newPassword}</div>}
                                 </div>
 
                                 <div className="form-group">
@@ -488,9 +560,7 @@ const AdminProfilePage = () => {
                                         onChange={handlePasswordChange}
                                         className={errors.confirmPassword ? 'error' : ''}
                                     />
-                                    {errors.confirmPassword && (
-                                        <div className="error-message">{errors.confirmPassword}</div>
-                                    )}
+                                    {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
                                 </div>
 
                                 <div className="password-requirements">
@@ -529,6 +599,18 @@ const AdminProfilePage = () => {
                                     </button>
                                 </div>
                             </form>
+                        ) : isGoogleUser() ? (
+                            <div className="security-summary">
+                                <div className="security-info">
+                                    <div className="security-icon">
+                                        <i className="fab fa-google"></i>
+                                    </div>
+                                    <div className="security-text">
+                                        <p>You signed in with Google. Password management is handled through Google.</p>
+                                        <p className="security-tip">To change your password, visit your Google Account settings.</p>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
                             <div className="security-summary">
                                 <div className="security-info">
@@ -559,7 +641,10 @@ const AdminProfilePage = () => {
                             <i className="fas fa-sign-out-alt"></i>
                             Log Out
                         </button>
-                        <button className="action-button delete-account-button">
+                        <button
+                            className="action-button delete-account-button"
+                            onClick={handleDeleteAccount}
+                        >
                             <i className="fas fa-user-times"></i>
                             Delete Account
                         </button>
@@ -571,6 +656,63 @@ const AdminProfilePage = () => {
             <footer className="admin-footer">
                 <p>&copy; 2025 Home Bot - Super Admin Panel</p>
             </footer>
+
+            {/* Delete Account Confirmation Dialog */}
+            {showDeleteConfirmation && (
+                <div className="confirmation-overlay">
+                    <div className="confirmation-dialog glass-card">
+                        <h3>Delete Your Account?</h3>
+                        <p>This action cannot be undone. All your data will be permanently deleted.</p>
+
+                        {!isGoogleUser() && (
+                            <div className="form-group mb-4">
+                                <label htmlFor="deleteConfirmPassword">Enter your password to confirm:</label>
+                                <input
+                                    type="password"
+                                    id="deleteConfirmPassword"
+                                    value={deleteConfirmPassword}
+                                    onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                                    className={errorMessage ? 'error' : ''}
+                                    placeholder="Your current password"
+                                />
+                                {errorMessage && <div className="error-message">{errorMessage}</div>}
+                            </div>
+                        )}
+
+                        {isGoogleUser() && (
+                            <p className="auth-note">You'll be prompted to sign in with Google to confirm.</p>
+                        )}
+
+                        <div className="confirmation-actions">
+                            <button
+                                className="cancel-button"
+                                onClick={() => {
+                                    setShowDeleteConfirmation(false);
+                                    setDeleteConfirmPassword('');
+                                    setErrorMessage('');
+                                }}
+                                disabled={deleteLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="delete-button"
+                                onClick={confirmDeleteAccount}
+                                disabled={deleteLoading || (!isGoogleUser() && !deleteConfirmPassword)}
+                            >
+                                {deleteLoading ? (
+                                    <>
+                                        <span className="spinner"></span>
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    'Delete Account'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
